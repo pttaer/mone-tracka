@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
@@ -23,13 +24,14 @@ import com.monetracka.shared.domain.util.CurrencyFormatter
 fun TransactionFeed(
     transactions: List<Transaction>,
     categories: Map<Long, Category> = emptyMap(),
+    accounts: Map<Long, Account> = emptyMap(),
     onDelete: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         transactions.forEach { tx ->
             val cat = categories[tx.categoryId]
-            TransactionRow(tx = tx, category = cat, onDelete = onDelete)
+            TransactionRow(tx = tx, category = cat, accounts = accounts, onDelete = onDelete)
         }
     }
 }
@@ -38,13 +40,37 @@ fun TransactionFeed(
 fun TransactionRow(
     tx: Transaction,
     category: Category?,
+    accounts: Map<Long, Account> = emptyMap(),
     onDelete: ((Long) -> Unit)?
 ) {
+    val isTransfer = tx.type == TransactionType.TRANSFER
     val isExpense = tx.type == TransactionType.EXPENSE
-    val amountColor = if (isExpense) Color(0xFFFF5A79) else Color(0xFF00D09C)
-    val amountPrefix = if (isExpense) "-" else "+"
-    val categoryName = category?.name ?: "Transaction"
-    val categoryEmoji = category?.emoji ?: if (isExpense) "💸" else "💰"
+    val amountColor = when {
+        isTransfer -> Color(0xFFD1DBE6)
+        isExpense -> Color(0xFFFF5A79)
+        else -> Color(0xFF00D09C)
+    }
+    val amountPrefix = when {
+        isTransfer -> ""
+        isExpense -> "-"
+        else -> "+"
+    }
+    val fromAccount = accounts[tx.accountId]
+    val toAccount = tx.toAccountId?.let { accounts[it] }
+
+    val categoryName = when {
+        isTransfer -> "Internal Transfer"
+        else -> category?.name ?: "Transaction"
+    }
+    val categoryEmoji = when {
+        isTransfer -> "🔁"
+        else -> category?.emoji ?: if (isExpense) "💸" else "💰"
+    }
+    val title = when {
+        tx.note.isNotBlank() -> tx.note
+        isTransfer -> "${fromAccount?.name ?: "Account"} ➔ ${toAccount?.name ?: "Account"}"
+        else -> categoryName
+    }
 
     Row(
         modifier = Modifier
@@ -71,7 +97,7 @@ fun TransactionRow(
             }
             Column {
                 Text(
-                    text = tx.note.ifBlank { categoryName },
+                    text = title,
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -79,6 +105,7 @@ fun TransactionRow(
                 Text(text = categoryName, color = Color(0xFF8FA2B6), fontSize = 11.sp)
             }
         }
+
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(horizontalAlignment = Alignment.End) {

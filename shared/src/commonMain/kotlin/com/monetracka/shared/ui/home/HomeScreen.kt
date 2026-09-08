@@ -152,8 +152,26 @@ class HomeScreen : Screen {
                     }
                 )
             }
+
+            // Create Account Bottom Sheet
+            if (state.isAddAccountSheetOpen) {
+                AddAccountBottomSheet(
+                    onDismiss = { screenModel.onIntent(HomeIntent.DismissAddAccount) },
+                    onCreateAccount = { name, emoji, balance, desc ->
+                        screenModel.onIntent(
+                            HomeIntent.CreateAccount(
+                                name = name,
+                                emoji = emoji,
+                                initialBalance = balance,
+                                description = desc
+                            )
+                        )
+                    }
+                )
+            }
         }
     }
+
 
 
     @Composable
@@ -356,11 +374,14 @@ class HomeScreen : Screen {
                     key = { it.id }
                 ) { tx ->
                     val cat = state.categories[tx.categoryId]
+                    val accountMap = remember(state.accounts) { state.accounts.associate { it.account.id to it.account } }
                     TransactionRow(
                         tx = tx,
                         category = cat,
+                        accounts = accountMap,
                         onDelete = onDeleteTransaction
                     )
+
                 }
             }
         }
