@@ -1,25 +1,31 @@
 package com.monetracka.shared.domain.model
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 enum class TransactionType {
     INCOME,
-    EXPENSE
+    EXPENSE,
+    TRANSFER
 }
 
-@Serializable
+data class Account(
+    val id: Long = 0,
+    val name: String,
+    val emoji: String,
+    val initialBalance: Double = 0.0,
+    val description: String = ""
+)
+
 data class Transaction(
     val id: Long = 0,
     val amount: Double,
     val type: TransactionType,
     val categoryId: Long,
+    val accountId: Long = 1L,
+    val toAccountId: Long? = null,
     val note: String = "",
     val dateMillis: Long,
     val createdAtMillis: Long = 0,
 )
 
-@Serializable
 data class Category(
     val id: Long = 0,
     val name: String,
@@ -29,10 +35,4 @@ data class Category(
     val isDefault: Boolean = true,
 )
 
-@Serializable
-data class Budget(
-    val id: Long = 0,
-    val categoryId: Long,
-    val monthlyLimit: Double,
-    val yearMonth: String,  // "2026-09" format
-)
+
