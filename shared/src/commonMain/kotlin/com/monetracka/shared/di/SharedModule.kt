@@ -28,6 +28,7 @@ fun sharedModule(): Module = module {
     single { com.monetracka.shared.domain.coach.SmartSavingCoachEngine() }
 
     // Screen Models
-    factory { HomeScreenModel(get(), get(), get(), get()) }
+    factory { HomeScreenModel(get(), get(), get(), get(), get()) }
     factory { TransactionListScreenModel(get(), get()) }
 }
+
