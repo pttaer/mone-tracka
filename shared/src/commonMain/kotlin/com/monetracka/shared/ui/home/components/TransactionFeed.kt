@@ -25,13 +25,14 @@ fun TransactionFeed(
     transactions: List<Transaction>,
     categories: Map<Long, Category> = emptyMap(),
     accounts: Map<Long, Account> = emptyMap(),
+    currency: String = "USD",
     onDelete: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         transactions.forEach { tx ->
             val cat = categories[tx.categoryId]
-            TransactionRow(tx = tx, category = cat, accounts = accounts, onDelete = onDelete)
+            TransactionRow(tx = tx, category = cat, accounts = accounts, currency = currency, onDelete = onDelete)
         }
     }
 }
@@ -41,6 +42,7 @@ fun TransactionRow(
     tx: Transaction,
     category: Category?,
     accounts: Map<Long, Account> = emptyMap(),
+    currency: String = "USD",
     onDelete: ((Long) -> Unit)?
 ) {
     val isTransfer = tx.type == TransactionType.TRANSFER
@@ -110,12 +112,12 @@ fun TransactionRow(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "$amountPrefix${CurrencyFormatter.format(tx.amount)}",
+                    text = "$amountPrefix${CurrencyFormatter.format(tx.amount, currency)}",
                     color = amountColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
-                Text(text = "USD", color = Color(0xFF54687F), fontSize = 10.sp)
+                Text(text = currency, color = Color(0xFF54687F), fontSize = 10.sp)
             }
 
             if (onDelete != null) {

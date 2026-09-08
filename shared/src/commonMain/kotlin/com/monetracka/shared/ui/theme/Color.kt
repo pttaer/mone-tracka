@@ -52,20 +52,6 @@ val LightColorScheme = lightColorScheme(
     onError = Color.White,
 )
 
-// Category colors for charts/icons
-val CategoryColors = listOf(
-    MintGreen,
-    SkyBlue,
-    SunsetOrange,
-    CoralRed,
-    LavenderPurple,
-    Color(0xFF00CEC9),  // Teal
-    Color(0xFFFDCB6E),  // Gold
-    Color(0xFFE17055),  // Burnt Orange
-    Color(0xFF6C5CE7),  // Indigo
-    Color(0xFF55EFC4),  // Light Mint
-)
-
 val CategoryColorHexes = listOf(
     0xFF00D09CL,
     0xFF00B4D8L,
@@ -78,3 +64,7 @@ val CategoryColorHexes = listOf(
     0xFF6C5CE7L,
     0xFF55EFC4L,
 )
+
+// Category colors for charts/icons derived from single source of truth
+val CategoryColors = CategoryColorHexes.map { Color(it) }
+

@@ -123,7 +123,7 @@ fun TransferBottomSheet(
                         )
                     }
                     Text(
-                        text = "$${CurrencyFormatter.format(sourceBalance)}",
+                        text = CurrencyFormatter.format(sourceBalance),
                         color = Color(0xFF00D09C),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -152,13 +152,14 @@ fun TransferBottomSheet(
                         Text(text = targetAccount.emoji, fontSize = 18.sp)
                     }
                     Text(
-                        text = "$${CurrencyFormatter.format(targetBalance)}",
+                        text = CurrencyFormatter.format(targetBalance),
                         color = Color(0xFF00D09C),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
+
 
             // Amount Input Field
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -251,13 +252,13 @@ fun TransferBottomSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${sourceAccount.name}: $${CurrencyFormatter.format(projectedSource)}",
+                        text = "${sourceAccount.name}: ${CurrencyFormatter.format(projectedSource)}",
                         color = if (isOverdraft) Color(0xFFFFB300) else Color(0xFF8FA2B6),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "-$${CurrencyFormatter.format(transferAmount)}",
+                        text = "-${CurrencyFormatter.format(transferAmount)}",
                         color = Color(0xFFFF5A79),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -268,18 +269,19 @@ fun TransferBottomSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${targetAccount.name}: $${CurrencyFormatter.format(projectedTarget)}",
+                        text = "${targetAccount.name}: ${CurrencyFormatter.format(projectedTarget)}",
                         color = Color(0xFF8FA2B6),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "+$${CurrencyFormatter.format(transferAmount)}",
+                        text = "+${CurrencyFormatter.format(transferAmount)}",
                         color = Color(0xFF00D09C),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
+
 
                 if (isOverdraft) {
                     Text(

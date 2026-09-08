@@ -32,6 +32,9 @@ data class HomeUiState(
     val transferSourceAccount: Account? = null,
     val transferTargetAccount: Account? = null,
     val isAddAccountSheetOpen: Boolean = false,
+    val userName: String = "User",
+    val userInitials: String = "U",
+    val currency: String = "USD",
     val isLoading: Boolean = false
 )
 

@@ -66,7 +66,7 @@ class HomeScreen : Screen {
                     onOpenAdd = { screenModel.onIntent(HomeIntent.OpenAddTransaction(it)) }
                 )
                 3 -> BudgetsView(state = state, listState = budgetsListState)
-                4 -> SettingsView(listState = settingsListState)
+                4 -> SettingsView(state = state, listState = settingsListState)
             }
 
             // Native Material3 Bottom Navigation Bar
@@ -213,7 +213,7 @@ class HomeScreen : Screen {
                                 .background(Color(0xFF00D09C))
                         ) {
                             Text(
-                                text = "MT",
+                                text = state.userInitials,
                                 color = Color(0xFF051A12),
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp
@@ -228,7 +228,7 @@ class HomeScreen : Screen {
                                 letterSpacing = 0.5.sp
                             )
                             Text(
-                                text = "Alexandre Chen",
+                                text = state.userName,
                                 fontSize = 15.sp,
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
@@ -253,7 +253,8 @@ class HomeScreen : Screen {
                 BalanceHeroCard(
                     balance = state.totalBalance,
                     trendPercent = state.monthlyTrendPercent,
-                    sparklinePoints = state.sparklinePoints
+                    sparklinePoints = state.sparklinePoints,
+                    currency = state.currency
                 )
             }
 
@@ -263,7 +264,8 @@ class HomeScreen : Screen {
                     AccountStrip(
                         accounts = state.accounts,
                         onInitiateTransfer = onInitiateTransfer,
-                        onAddAccount = onAddAccount
+                        onAddAccount = onAddAccount,
+                        currency = state.currency
                     )
                 }
             }
@@ -379,6 +381,7 @@ class HomeScreen : Screen {
                         tx = tx,
                         category = cat,
                         accounts = accountMap,
+                        currency = state.currency,
                         onDelete = onDeleteTransaction
                     )
 
@@ -429,7 +432,7 @@ class HomeScreen : Screen {
                     Column {
                         Text("Total Inflow", color = Color(0xFF8FA2B6), fontSize = 12.sp)
                         Text(
-                            "+$${CurrencyFormatter.format(totalIncome)}",
+                            "+${CurrencyFormatter.format(totalIncome, state.currency)}",
                             color = Color(0xFF00D09C),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
@@ -438,7 +441,7 @@ class HomeScreen : Screen {
                     Column(horizontalAlignment = Alignment.End) {
                         Text("Total Outflow", color = Color(0xFF8FA2B6), fontSize = 12.sp)
                         Text(
-                            "-$${CurrencyFormatter.format(totalExpense)}",
+                            "-${CurrencyFormatter.format(totalExpense, state.currency)}",
                             color = Color(0xFFFF5A79),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
@@ -482,7 +485,7 @@ class HomeScreen : Screen {
                     ) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(text = cat.category, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                            Text(text = "$${CurrencyFormatter.format(cat.amount)} (%.1f%%)".format(cat.percentage), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = catColor)
+                            Text(text = "${CurrencyFormatter.format(cat.amount, state.currency)} (%.1f%%)".format(cat.percentage), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = catColor)
                         }
                         Box(
                             modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(999.dp)).background(Color.White.copy(alpha = 0.08f))
@@ -519,9 +522,9 @@ class HomeScreen : Screen {
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Monthly Limit", color = Color(0xFF8FA2B6), fontSize = 12.sp)
-                        Text("Remaining: $${CurrencyFormatter.format(remaining)}", color = if (remaining > 0) Color(0xFF00D09C) else Color(0xFFFF5A79), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Remaining: ${CurrencyFormatter.format(remaining, state.currency)}", color = if (remaining > 0) Color(0xFF00D09C) else Color(0xFFFF5A79), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
-                    Text(text = "$${CurrencyFormatter.format(totalSpent)} / $${CurrencyFormatter.format(monthlyBudget)}", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                    Text(text = "${CurrencyFormatter.format(totalSpent, state.currency)} / ${CurrencyFormatter.format(monthlyBudget, state.currency)}", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
                     Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)).background(Color.White.copy(alpha = 0.08f))) {
                         Box(modifier = Modifier.fillMaxWidth(fraction = (totalSpent / monthlyBudget).toFloat().coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(999.dp)).background(Color(0xFF00D09C)))
                     }
@@ -540,14 +543,20 @@ class HomeScreen : Screen {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(cat.category, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    Text("$${CurrencyFormatter.format(cat.amount)} / $500", color = catColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("${CurrencyFormatter.format(cat.amount, state.currency)} / ${CurrencyFormatter.format(500.0, state.currency)}", color = catColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
     }
 
     @Composable
-    private fun SettingsView(listState: LazyListState) {
+    private fun SettingsView(state: HomeUiState, listState: LazyListState) {
+        val currencyLabel = when (state.currency) {
+            "EUR" -> "EUR (€)"
+            "GBP" -> "GBP (£)"
+            "VND" -> "VND (₫)"
+            else -> "USD ($)"
+        }
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
@@ -557,14 +566,35 @@ class HomeScreen : Screen {
             item(key = "settings_title") {
                 Text(text = "Settings & Preferences", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
-            item(key = "currency_section") {
+            item(key = "profile_section") {
                 Column(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF172535)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp)).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Profile Name", color = Color.White, fontSize = 14.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF00D09C))
+                            ) {
+                                Text(
+                                    text = state.userInitials,
+                                    color = Color(0xFF051A12),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Text(state.userName, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.06f))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Active Currency", color = Color.White, fontSize = 14.sp)
-                        Text("USD ($)", color = Color(0xFF00D09C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text(currencyLabel, color = Color(0xFF00D09C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                     HorizontalDivider(color = Color.White.copy(alpha = 0.06f))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

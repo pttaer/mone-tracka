@@ -41,6 +41,7 @@ fun AccountStrip(
     accounts: List<AccountUiModel>,
     onInitiateTransfer: (Account, Account) -> Unit,
     onAddAccount: () -> Unit,
+    currency: String = "USD",
     modifier: Modifier = Modifier
 ) {
     var draggingAccountId by remember { mutableStateOf<Long?>(null) }
@@ -106,6 +107,7 @@ fun AccountStrip(
                     dragOffset = if (isDragging) dragDelta else Offset.Zero,
                     scale = scale,
                     rotation = rotation,
+                    currency = currency,
                     onPositioned = { rect -> cardBounds[item.account.id] = rect },
                     onDragStart = { startOffset ->
                         draggingAccountId = item.account.id
@@ -197,6 +199,7 @@ private fun AccountCard(
     dragOffset: Offset,
     scale: Float,
     rotation: Float,
+    currency: String = "USD",
     onPositioned: (Rect) -> Unit,
     onDragStart: (Offset) -> Unit,
     onDrag: (Offset) -> Unit,
@@ -297,7 +300,7 @@ private fun AccountCard(
                     maxLines = 1
                 )
                 Text(
-                    text = "$${CurrencyFormatter.format(item.balance)}",
+                    text = CurrencyFormatter.format(item.balance, currency),
                     color = Color.White,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,

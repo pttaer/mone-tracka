@@ -24,4 +24,6 @@ captures/
 
 # Local Agent & Tooling caches
 .codegraph/
+.superpowers/
 *.log
+

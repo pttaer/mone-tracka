@@ -27,10 +27,11 @@ fun BalanceHeroCard(
     balance: Double,
     trendPercent: Double,
     sparklinePoints: List<Float>,
+    currency: String = "USD",
     modifier: Modifier = Modifier
 ) {
-    val (intPartWithSymbol, decPart) = remember(balance) {
-        com.monetracka.shared.domain.util.CurrencyFormatter.splitAmount(balance, "USD")
+    val (intPartWithSymbol, decPart) = remember(balance, currency) {
+        com.monetracka.shared.domain.util.CurrencyFormatter.splitAmount(balance, currency)
     }
 
     Box(
@@ -54,8 +55,14 @@ fun BalanceHeroCard(
                     letterSpacing = 1.sp,
                     color = Color(0xFF8FA2B6)
                 )
+                val currencyTag = when (currency) {
+                    "EUR" -> "EUR (€)"
+                    "GBP" -> "GBP (£)"
+                    "VND" -> "VND (₫)"
+                    else -> "USD ($)"
+                }
                 Text(
-                    text = "USD ($)",
+                    text = currencyTag,
                     fontSize = 11.sp,
                     color = Color(0xFFE2E8F0),
                     fontWeight = FontWeight.SemiBold

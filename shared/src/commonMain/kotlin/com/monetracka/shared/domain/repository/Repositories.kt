@@ -3,6 +3,7 @@ package com.monetracka.shared.domain.repository
 import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.Category
+import com.monetracka.shared.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 
 interface TransactionRepository {
@@ -23,5 +24,12 @@ interface AccountRepository {
     suspend fun deleteAccount(id: Long)
     suspend fun insertDefaultAccounts()
 }
+
+interface UserProfileRepository {
+    fun getUserProfile(): Flow<UserProfile?>
+    suspend fun saveUserProfile(profile: UserProfile)
+    suspend fun hasCompletedOnboarding(): Boolean
+}
+
 
 

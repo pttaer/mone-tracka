@@ -9,7 +9,9 @@ import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.domain.repository.AccountRepository
 import com.monetracka.shared.domain.repository.CategoryRepository
 import com.monetracka.shared.domain.repository.TransactionRepository
+import com.monetracka.shared.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -17,6 +19,7 @@ class HomeScreenModel(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
+    private val userProfileRepository: UserProfileRepository? = null,
     private val quoteRepository: com.monetracka.shared.domain.quote.QuoteRepository = com.monetracka.shared.domain.quote.QuoteRepositoryImpl(),
     private val coachEngine: com.monetracka.shared.domain.coach.SmartSavingCoachEngine = com.monetracka.shared.domain.coach.SmartSavingCoachEngine(),
 ) : StateScreenModel<HomeUiState>(HomeUiState(isLoading = true)) {
@@ -30,8 +33,9 @@ class HomeScreenModel(
             combine(
                 transactionRepository.getAllTransactions(),
                 categoryRepository.getAllCategories(),
-                accountRepository.getAllAccounts()
-            ) { transactions, categories, accounts ->
+                accountRepository.getAllAccounts(),
+                userProfileRepository?.getUserProfile() ?: flowOf(null)
+            ) { transactions, categories, accounts, userProfile ->
                 val categoryMap = categories.associateBy { it.id }
 
                 val accountUiList = accounts.map { acc ->
@@ -106,6 +110,9 @@ class HomeScreenModel(
                     transferSourceAccount = mutableState.value.transferSourceAccount,
                     transferTargetAccount = mutableState.value.transferTargetAccount,
                     isAddAccountSheetOpen = mutableState.value.isAddAccountSheetOpen,
+                    userName = userProfile?.userName ?: "User",
+                    userInitials = userProfile?.initials ?: "U",
+                    currency = userProfile?.currency ?: "USD",
                     isLoading = false
                 )
             }.collect { newState ->

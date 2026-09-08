@@ -39,6 +39,12 @@ class FakeAccountRepository(private val accounts: List<Account>) : AccountReposi
     override suspend fun insertDefaultAccounts() {}
 }
 
+class FakeUserProfileRepository(private val profile: com.monetracka.shared.domain.model.UserProfile?) : com.monetracka.shared.domain.repository.UserProfileRepository {
+    override fun getUserProfile(): Flow<com.monetracka.shared.domain.model.UserProfile?> = flowOf(profile)
+    override suspend fun saveUserProfile(profile: com.monetracka.shared.domain.model.UserProfile) {}
+    override suspend fun hasCompletedOnboarding(): Boolean = profile?.hasCompletedOnboarding ?: false
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeScreenModelTest {
     private val testDispatcher = StandardTestDispatcher()
@@ -76,6 +82,28 @@ class HomeScreenModelTest {
         testScheduler.advanceUntilIdle()
 
         assertEquals(60.0, viewModel.state.value.totalBalance, 0.01)
+    }
+
+    @Test
+    fun testUserProfileLoaded() = runTest(testDispatcher) {
+        val profile = com.monetracka.shared.domain.model.UserProfile(
+            userName = "Sarah Connor",
+            currency = "EUR",
+            hasCompletedOnboarding = true
+        )
+
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(emptyList()),
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList()),
+            userProfileRepository = FakeUserProfileRepository(profile)
+        )
+
+        testScheduler.advanceUntilIdle()
+
+        assertEquals("Sarah Connor", viewModel.state.value.userName)
+        assertEquals("SC", viewModel.state.value.userInitials)
+        assertEquals("EUR", viewModel.state.value.currency)
     }
 }
 

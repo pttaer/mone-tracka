@@ -2,14 +2,17 @@ package com.monetracka.shared.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.monetracka.db.MoneTrackaDatabase
 import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
+import com.monetracka.shared.domain.model.UserProfile
 import com.monetracka.shared.domain.repository.AccountRepository
 import com.monetracka.shared.domain.repository.CategoryRepository
 import com.monetracka.shared.domain.repository.TransactionRepository
+import com.monetracka.shared.domain.repository.UserProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -139,7 +142,40 @@ class AccountRepositoryImpl(
     }
 }
 
+class UserProfileRepositoryImpl(
+    private val database: MoneTrackaDatabase,
+) : UserProfileRepository {
+
+    private val queries = database.moneTrackaDatabaseQueries
+
+    override fun getUserProfile(): Flow<UserProfile?> {
+        return queries.getUserProfile()
+            .asFlow()
+            .mapToOneOrNull(Dispatchers.IO)
+            .map { it?.toDomain() }
+    }
+
+    override suspend fun saveUserProfile(profile: UserProfile) {
+        queries.insertOrUpdateUserProfile(
+            userName = profile.userName,
+            currency = profile.currency,
+            hasCompletedOnboarding = if (profile.hasCompletedOnboarding) 1L else 0L
+        )
+    }
+
+    override suspend fun hasCompletedOnboarding(): Boolean {
+        val profile = queries.getUserProfile().executeAsOneOrNull()
+        return profile?.hasCompletedOnboarding == 1L
+    }
+}
+
 // Extension functions to map DB entities to domain models
+private fun com.monetracka.db.UserProfileEntity.toDomain() = UserProfile(
+    userName = userName,
+    currency = currency,
+    hasCompletedOnboarding = hasCompletedOnboarding == 1L
+)
+
 private fun com.monetracka.db.AccountEntity.toDomain() = Account(
     id = id,
     name = name,
@@ -168,4 +204,5 @@ private fun com.monetracka.db.TransactionEntity.toDomain() = Transaction(
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
 )
+
 

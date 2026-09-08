@@ -15,6 +15,13 @@ CREATE TABLE IF NOT EXISTS AccountEntity (
     description TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS UserProfileEntity (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    userName TEXT NOT NULL DEFAULT 'User',
+    currency TEXT NOT NULL DEFAULT 'USD',
+    hasCompletedOnboarding INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS TransactionEntity (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     amount REAL NOT NULL,
@@ -78,4 +85,16 @@ DELETE FROM TransactionEntity WHERE id = ?;
 
 lastInsertedTransactionId:
 SELECT last_insert_rowid();
+
+-- User Profile Queries
+getUserProfile:
+SELECT * FROM UserProfileEntity WHERE id = 1 LIMIT 1;
+
+insertOrUpdateUserProfile:
+INSERT OR REPLACE INTO UserProfileEntity(id, userName, currency, hasCompletedOnboarding)
+VALUES (1, ?, ?, ?);
+
+getUserProfileCount:
+SELECT COUNT(*) FROM UserProfileEntity;
+
 
