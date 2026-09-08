@@ -1,0 +1,27 @@
+# Kotlin / Gradle builds
+**/build/
+.gradle/
+.kotlin/
+/local.properties
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+*.iml
+.idea/
+*.iws
+*.ipr
+
+# Android / Native
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.dex
+
+# Local Agent & Tooling caches
+.codegraph/
+*.log

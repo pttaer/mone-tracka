@@ -1,0 +1,77 @@
+CREATE TABLE IF NOT EXISTS CategoryEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    emoji TEXT NOT NULL,
+    colorIndex INTEGER NOT NULL DEFAULT 0,
+    type TEXT NOT NULL,
+    isDefault INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS TransactionEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    categoryId INTEGER NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    dateMillis INTEGER NOT NULL,
+    createdAtMillis INTEGER NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES CategoryEntity(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_transaction_date ON TransactionEntity(dateMillis);
+CREATE INDEX idx_transaction_category ON TransactionEntity(categoryId);
+CREATE INDEX idx_transaction_type ON TransactionEntity(type);
+
+-- Category Queries
+getAllCategories:
+SELECT * FROM CategoryEntity ORDER BY name ASC;
+
+getCategoriesByType:
+SELECT * FROM CategoryEntity WHERE type = ? ORDER BY name ASC;
+
+insertCategory:
+INSERT INTO CategoryEntity(name, emoji, colorIndex, type, isDefault)
+VALUES (?, ?, ?, ?, ?);
+
+updateCategory:
+UPDATE CategoryEntity SET name = ?, emoji = ?, colorIndex = ? WHERE id = ?;
+
+deleteCategory:
+DELETE FROM CategoryEntity WHERE id = ?;
+
+lastInsertedCategoryId:
+SELECT last_insert_rowid();
+
+getCategoryCount:
+SELECT COUNT(*) FROM CategoryEntity;
+
+-- Transaction Queries
+getAllTransactions:
+SELECT * FROM TransactionEntity ORDER BY dateMillis DESC;
+
+getTransactionsByMonth:
+SELECT * FROM TransactionEntity
+WHERE dateMillis >= ? AND dateMillis < ?
+ORDER BY dateMillis DESC;
+
+getTransactionsByCategory:
+SELECT * FROM TransactionEntity WHERE categoryId = ? ORDER BY dateMillis DESC;
+
+getTotalByTypeAndDateRange:
+SELECT COALESCE(SUM(amount), 0.0) FROM TransactionEntity
+WHERE type = ? AND dateMillis >= ? AND dateMillis < ?;
+
+insertTransaction:
+INSERT INTO TransactionEntity(amount, type, categoryId, note, dateMillis, createdAtMillis)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateTransaction:
+UPDATE TransactionEntity
+SET amount = ?, type = ?, categoryId = ?, note = ?, dateMillis = ?
+WHERE id = ?;
+
+deleteTransaction:
+DELETE FROM TransactionEntity WHERE id = ?;
+
+lastInsertedTransactionId:
+SELECT last_insert_rowid();
