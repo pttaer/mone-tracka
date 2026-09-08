@@ -18,6 +18,7 @@ class HomeScreenModel(
 
     init {
         screenModelScope.launch {
+            categoryRepository.insertDefaultCategories()
             combine(
                 transactionRepository.getAllTransactions(),
                 categoryRepository.getAllCategories()

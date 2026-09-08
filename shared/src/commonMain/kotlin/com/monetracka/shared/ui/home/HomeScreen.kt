@@ -175,7 +175,11 @@ class HomeScreen : Screen {
                             )
                         }
                     } else {
-                        TransactionFeed(transactions = state.recentTransactions)
+                        TransactionFeed(
+                            transactions = state.recentTransactions,
+                            categories = state.categories,
+                            onDelete = { screenModel.onIntent(HomeIntent.DeleteTransaction(it)) }
+                        )
                     }
                 }
             }

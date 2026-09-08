@@ -23,9 +23,7 @@ fun BalanceHeroCard(
     sparklinePoints: List<Float>,
     modifier: Modifier = Modifier
 ) {
-    val parts = "%.2f".format(kotlin.math.abs(balance)).split(".")
-    val intPart = "${if (balance < 0) "-" else ""}${parts[0]}"
-    val fracPart = parts.getOrElse(1) { "00" }
+    val (intPartWithSymbol, decPart) = com.monetracka.shared.domain.util.CurrencyFormatter.splitAmount(balance, "USD")
 
     Box(
         modifier = modifier
@@ -63,9 +61,8 @@ fun BalanceHeroCard(
             Spacer(Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(text = "$", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF00D09C))
-                Text(text = "$intPart", fontSize = 38.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                Text(text = ".$fracPart", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8FA2B6))
+                Text(text = intPartWithSymbol, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Text(text = decPart, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8FA2B6))
             }
 
             Spacer(Modifier.height(10.dp))
