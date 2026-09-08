@@ -56,7 +56,9 @@ class HomeScreen : Screen {
                     onRefreshQuote = { screenModel.onIntent(HomeIntent.RefreshQuote) },
                     onNavigateToAnalytics = { selectedTab = 1 },
                     onNavigateToAllTransactions = { navigator.push(TransactionListScreen()) },
-                    onDeleteTransaction = { screenModel.onIntent(HomeIntent.DeleteTransaction(it)) }
+                    onDeleteTransaction = { screenModel.onIntent(HomeIntent.DeleteTransaction(it)) },
+                    onInitiateTransfer = { from, to -> screenModel.onIntent(HomeIntent.InitiateTransfer(from, to)) },
+                    onAddAccount = { screenModel.onIntent(HomeIntent.OpenAddAccount) }
                 )
                 1 -> AnalyticsView(
                     state = state,
@@ -138,7 +140,9 @@ class HomeScreen : Screen {
         onRefreshQuote: () -> Unit,
         onNavigateToAnalytics: () -> Unit,
         onNavigateToAllTransactions: () -> Unit,
-        onDeleteTransaction: (Long) -> Unit
+        onDeleteTransaction: (Long) -> Unit,
+        onInitiateTransfer: (com.monetracka.shared.domain.model.Account, com.monetracka.shared.domain.model.Account) -> Unit,
+        onAddAccount: () -> Unit
     ) {
         LazyColumn(
             state = listState,
@@ -210,6 +214,18 @@ class HomeScreen : Screen {
                     sparklinePoints = state.sparklinePoints
                 )
             }
+
+            // Accounts Strip with Drag & Drop
+            if (state.accounts.isNotEmpty()) {
+                item(key = "accounts_strip") {
+                    AccountStrip(
+                        accounts = state.accounts,
+                        onInitiateTransfer = onInitiateTransfer,
+                        onAddAccount = onAddAccount
+                    )
+                }
+            }
+
 
             // Smart Saving Coach Card
             state.coachInsight?.let { insight ->
