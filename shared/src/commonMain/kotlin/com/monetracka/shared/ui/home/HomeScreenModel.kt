@@ -14,7 +14,11 @@ import kotlinx.datetime.Clock
 class HomeScreenModel(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
+    private val quoteRepository: com.monetracka.shared.domain.quote.QuoteRepository = com.monetracka.shared.domain.quote.QuoteRepositoryImpl(),
+    private val coachEngine: com.monetracka.shared.domain.coach.SmartSavingCoachEngine = com.monetracka.shared.domain.coach.SmartSavingCoachEngine(),
 ) : StateScreenModel<HomeUiState>(HomeUiState(isLoading = true)) {
+
+    private var currentQuote = quoteRepository.getDailyQuote()
 
     init {
         screenModelScope.launch {
@@ -35,14 +39,14 @@ class HomeScreenModel(
                     .map { (catId, txList) ->
                         val cat = categoryMap[catId]
                         val catName = cat?.name ?: "Other"
-                        val catColor = com.monetracka.shared.ui.theme.CategoryColors.getOrElse(cat?.colorIndex ?: 0) {
-                            com.monetracka.shared.ui.theme.MintGreen
-                        }
+                        val colorIdx = cat?.colorIndex ?: 0
+                        val hex = com.monetracka.shared.ui.theme.CategoryColorHexes.getOrElse(colorIdx) { 0xFF00D09CL }
                         CategorySpend(
                             category = catName,
                             amount = txList.sumOf { it.amount },
                             totalSpend = totalExpense,
-                            colorHex = (catColor.value.toLong() shr 32) or (catColor.value.toLong() shl 32)
+                            colorIndex = colorIdx,
+                            colorHex = hex
                         )
                     }
                     .sortedByDescending { it.amount }
@@ -57,14 +61,20 @@ class HomeScreenModel(
                     listOf(0f, 15f, 35f, 28f, 50f, 75f, 90f)
                 }
 
+                val trend = if (totalIncome > 0) ((totalIncome - totalExpense) / totalIncome) * 100.0 else if (totalExpense > 0) -100.0 else 0.0
+
+                val insight = coachEngine.evaluate(transactions, categories)
+
                 HomeUiState(
                     totalBalance = balance,
-                    monthlyTrendPercent = 18.4,
+                    monthlyTrendPercent = trend,
                     monthlyTrendAmount = totalIncome - totalExpense,
                     sparklinePoints = sparkline,
                     categorySpends = expensesByCategory,
                     recentTransactions = transactions.sortedByDescending { it.dateMillis }.take(20),
                     categories = categoryMap,
+                    coachInsight = insight,
+                    financialQuote = currentQuote,
                     isLoading = false
                 )
             }.collect { newState ->
@@ -75,8 +85,15 @@ class HomeScreenModel(
 
     fun onIntent(intent: HomeIntent) {
         when (intent) {
-            HomeIntent.OpenAddTransaction -> mutableState.value = mutableState.value.copy(isAddSheetOpen = true)
+            is HomeIntent.OpenAddTransaction -> mutableState.value = mutableState.value.copy(
+                isAddSheetOpen = true,
+                addSheetInitialType = intent.initialType
+            )
             HomeIntent.DismissAddTransaction -> mutableState.value = mutableState.value.copy(isAddSheetOpen = false)
+            HomeIntent.RefreshQuote -> {
+                currentQuote = quoteRepository.getRandomQuote()
+                mutableState.value = mutableState.value.copy(financialQuote = currentQuote)
+            }
             is HomeIntent.CreateTransaction -> {
                 screenModelScope.launch {
                     val now = Clock.System.now().toEpochMilliseconds()

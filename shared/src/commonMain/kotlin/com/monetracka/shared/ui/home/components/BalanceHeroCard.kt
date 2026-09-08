@@ -16,6 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 
+import androidx.compose.runtime.remember
+
+private val HeroCardBrush = Brush.linearGradient(
+    listOf(Color(0xFF1C2E42), Color(0xFF132232), Color(0xFF0E1A27))
+)
+
 @Composable
 fun BalanceHeroCard(
     balance: Double,
@@ -23,17 +29,15 @@ fun BalanceHeroCard(
     sparklinePoints: List<Float>,
     modifier: Modifier = Modifier
 ) {
-    val (intPartWithSymbol, decPart) = com.monetracka.shared.domain.util.CurrencyFormatter.splitAmount(balance, "USD")
+    val (intPartWithSymbol, decPart) = remember(balance) {
+        com.monetracka.shared.domain.util.CurrencyFormatter.splitAmount(balance, "USD")
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(26.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFF1C2E42), Color(0xFF132232), Color(0xFF0E1A27))
-                )
-            )
+            .background(HeroCardBrush)
             .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(26.dp))
             .padding(20.dp)
     ) {
@@ -68,15 +72,18 @@ fun BalanceHeroCard(
             Spacer(Modifier.height(10.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val isPositive = trendPercent >= 0
+                val trendColor = if (isPositive) Color(0xFF00D09C) else Color(0xFFFF5A79)
+                val trendPrefix = if (isPositive) "+" else ""
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF00D09C).copy(alpha = 0.16f))
+                        .background(trendColor.copy(alpha = 0.16f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "+%.1f%%".format(trendPercent),
-                        color = Color(0xFF00D09C),
+                        text = "$trendPrefix%.1f%%".format(trendPercent),
+                        color = trendColor,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )

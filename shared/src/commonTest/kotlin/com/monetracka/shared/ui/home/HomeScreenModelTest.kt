@@ -7,7 +7,13 @@ import com.monetracka.shared.domain.repository.CategoryRepository
 import com.monetracka.shared.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -31,8 +37,20 @@ class FakeCategoryRepository(private val cats: List<Category>) : CategoryReposit
 }
 
 class HomeScreenModelTest {
+    private val testDispatcher = StandardTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     @Test
-    fun testBalanceCalculation() = runTest {
+    fun testBalanceCalculation() = runTest(testDispatcher) {
         val fakeTxs = listOf(
             Transaction(id = 1L, amount = 100.0, type = TransactionType.INCOME, categoryId = 1L, dateMillis = 1000L),
             Transaction(id = 2L, amount = 40.0, type = TransactionType.EXPENSE, categoryId = 2L, dateMillis = 2000L)
@@ -46,6 +64,8 @@ class HomeScreenModelTest {
             transactionRepository = FakeTransactionRepository(fakeTxs),
             categoryRepository = FakeCategoryRepository(fakeCats)
         )
+
+        testScheduler.advanceUntilIdle()
 
         assertEquals(60.0, viewModel.state.value.totalBalance, 0.01)
     }

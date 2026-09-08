@@ -39,12 +39,17 @@ class AddTransactionScreenModel(
         loadCategories()
     }
 
+    private var categoriesJob: kotlinx.coroutines.Job? = null
+
     private fun loadCategories() {
-        screenModelScope.launch {
+        categoriesJob?.cancel()
+        categoriesJob = screenModelScope.launch {
+            categoryRepository.insertDefaultCategories()
             categoryRepository.getCategoriesByType(_uiState.value.type).collect { categories ->
                 _uiState.value = _uiState.value.copy(
                     categories = categories,
-                    selectedCategoryId = _uiState.value.selectedCategoryId ?: categories.firstOrNull()?.id,
+                    selectedCategoryId = _uiState.value.selectedCategoryId?.takeIf { id -> categories.any { it.id == id } }
+                        ?: categories.firstOrNull()?.id,
                 )
             }
         }
@@ -79,8 +84,8 @@ class AddTransactionScreenModel(
         val state = _uiState.value
         val amount = state.amount.toDoubleOrNull()
 
-        if (amount == null || amount <= 0) {
-            _uiState.value = state.copy(error = "Please enter a valid amount")
+        if (amount == null || amount <= 0 || !amount.isFinite() || amount > 1_000_000_000.0) {
+            _uiState.value = state.copy(error = "Please enter an amount between $0.01 and $1,000,000,000")
             return
         }
         if (state.selectedCategoryId == null) {
@@ -97,7 +102,7 @@ class AddTransactionScreenModel(
                         amount = amount,
                         type = state.type,
                         categoryId = state.selectedCategoryId,
-                        note = state.note.trim(),
+                        note = state.note.trim().take(255),
                         dateMillis = state.dateMillis,
                     )
                 )

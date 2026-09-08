@@ -57,6 +57,12 @@ kotlin {
             implementation(libs.voyager.koin)
         }
 
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.coroutines.test)
+        }
+
         androidMain.dependencies {
             implementation(libs.sqldelight.android.driver)
             implementation(libs.koin.android)

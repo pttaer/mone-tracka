@@ -43,6 +43,7 @@ fun CategoryInsightsCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             categorySpends.take(3).forEach { cat ->
+                val catColor = com.monetracka.shared.ui.theme.CategoryColors.getOrElse(cat.colorIndex) { Color(cat.colorHex) }
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -53,7 +54,7 @@ fun CategoryInsightsCard(
                                 modifier = Modifier
                                     .size(7.dp)
                                     .clip(RoundedCornerShape(999.dp))
-                                    .background(Color(cat.colorHex))
+                                    .background(catColor)
                             )
                             Text(text = cat.category, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFD1DBE6))
                         }
@@ -76,7 +77,7 @@ fun CategoryInsightsCard(
                                 .fillMaxWidth(fraction = (cat.percentage.toFloat() / 100f).coerceIn(0f, 1f))
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(999.dp))
-                                .background(Color(cat.colorHex))
+                                .background(catColor)
                         )
                     }
                 }

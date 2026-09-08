@@ -4,7 +4,8 @@ data class CategorySpend(
     val category: String,
     val amount: Double,
     val totalSpend: Double,
-    val colorHex: Long,
+    val colorIndex: Int = 0,
+    val colorHex: Long = 0xFF00D09CL,
     val budgetLimit: Double? = null
 ) {
     val percentage: Double

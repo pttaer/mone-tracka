@@ -32,7 +32,7 @@ import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.ui.theme.CoralRed
 import com.monetracka.shared.ui.theme.MintGreen
 
-class AddTransactionScreen : Screen {
+data class AddTransactionScreen(val initialType: TransactionType = TransactionType.EXPENSE) : Screen {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -40,6 +40,10 @@ class AddTransactionScreen : Screen {
         val screenModel = getScreenModel<AddTransactionScreenModel>()
         val state by screenModel.uiState.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
+
+        LaunchedEffect(initialType) {
+            screenModel.onTypeChanged(initialType)
+        }
 
         // Navigate back on save
         LaunchedEffect(state.isSaved) {

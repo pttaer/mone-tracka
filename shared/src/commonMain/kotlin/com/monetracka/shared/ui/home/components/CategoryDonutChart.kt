@@ -33,8 +33,9 @@ fun CategoryDonutChart(
             categorySpends.forEach { item ->
                 val sweep = (item.percentage.toFloat() / 100f) * 360f
                 if (sweep > 0f) {
+                    val itemColor = com.monetracka.shared.ui.theme.CategoryColors.getOrElse(item.colorIndex) { Color(item.colorHex) }
                     drawArc(
-                        color = Color(item.colorHex),
+                        color = itemColor,
                         startAngle = startAngle,
                         sweepAngle = sweep,
                         useCenter = false,

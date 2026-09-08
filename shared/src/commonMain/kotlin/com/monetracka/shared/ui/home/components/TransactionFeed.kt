@@ -35,7 +35,7 @@ fun TransactionFeed(
 }
 
 @Composable
-private fun TransactionRow(
+fun TransactionRow(
     tx: Transaction,
     category: Category?,
     onDelete: ((Long) -> Unit)?

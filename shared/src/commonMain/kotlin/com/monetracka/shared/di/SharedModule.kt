@@ -22,9 +22,13 @@ fun sharedModule(): Module = module {
     // Repositories
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get()) }
+    single<com.monetracka.shared.domain.quote.QuoteRepository> { com.monetracka.shared.domain.quote.QuoteRepositoryImpl() }
+
+    // Coach Engine
+    single { com.monetracka.shared.domain.coach.SmartSavingCoachEngine() }
 
     // Screen Models
-    factory { HomeScreenModel(get(), get()) }
+    factory { HomeScreenModel(get(), get(), get(), get()) }
     factory { AddTransactionScreenModel(get(), get()) }
     factory { TransactionListScreenModel(get(), get()) }
 }

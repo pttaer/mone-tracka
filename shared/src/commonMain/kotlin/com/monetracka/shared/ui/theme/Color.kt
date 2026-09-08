@@ -65,3 +65,16 @@ val CategoryColors = listOf(
     Color(0xFF6C5CE7),  // Indigo
     Color(0xFF55EFC4),  // Light Mint
 )
+
+val CategoryColorHexes = listOf(
+    0xFF00D09CL,
+    0xFF00B4D8L,
+    0xFFFF7A00L,
+    0xFFFF5A79L,
+    0xFFA29BFEL,
+    0xFF00CEC9L,
+    0xFFFDCB6EL,
+    0xFFE17055L,
+    0xFF6C5CE7L,
+    0xFF55EFC4L,
+)
