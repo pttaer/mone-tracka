@@ -129,8 +129,32 @@ class HomeScreen : Screen {
                     )
                 }
             )
+
+            // Tactile Transfer Bottom Sheet
+            if (state.isTransferSheetOpen && state.transferSourceAccount != null && state.transferTargetAccount != null) {
+                val sourceBalance = state.accounts.firstOrNull { it.account.id == state.transferSourceAccount?.id }?.balance ?: 0.0
+                val targetBalance = state.accounts.firstOrNull { it.account.id == state.transferTargetAccount?.id }?.balance ?: 0.0
+                TransferBottomSheet(
+                    sourceAccount = state.transferSourceAccount!!,
+                    targetAccount = state.transferTargetAccount!!,
+                    sourceBalance = sourceBalance,
+                    targetBalance = targetBalance,
+                    onDismiss = { screenModel.onIntent(HomeIntent.DismissTransfer) },
+                    onConfirmTransfer = { amount, note ->
+                        screenModel.onIntent(
+                            HomeIntent.ExecuteTransfer(
+                                fromAccountId = state.transferSourceAccount!!.id,
+                                toAccountId = state.transferTargetAccount!!.id,
+                                amount = amount,
+                                note = note
+                            )
+                        )
+                    }
+                )
+            }
         }
     }
+
 
     @Composable
     private fun OverviewView(
