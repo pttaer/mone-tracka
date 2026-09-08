@@ -3,6 +3,7 @@ package com.monetracka.shared.domain.coach
 import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
+import com.monetracka.shared.domain.util.CurrencyFormatter
 
 class SmartSavingCoachEngine {
 
@@ -33,6 +34,9 @@ class SmartSavingCoachEngine {
                 TransactionType.EXPENSE -> {
                     totalExpense += tx.amount
                     expenseByCategory[tx.categoryId] = (expenseByCategory[tx.categoryId] ?: 0.0) + tx.amount
+                }
+                TransactionType.TRANSFER -> {
+                    // Internal transfers do not affect income or expense totals
                 }
             }
         }
@@ -113,7 +117,5 @@ class SmartSavingCoachEngine {
         )
     }
 
-    private fun formatCurrency(amount: Double): String {
-        return "$${(amount * 100).toLong() / 100.0}"
-    }
+    private fun formatCurrency(amount: Double): String = CurrencyFormatter.format(amount)
 }

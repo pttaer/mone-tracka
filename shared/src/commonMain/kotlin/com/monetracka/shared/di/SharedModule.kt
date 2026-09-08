@@ -7,7 +7,6 @@ import com.monetracka.shared.data.repository.TransactionRepositoryImpl
 import com.monetracka.shared.domain.repository.CategoryRepository
 import com.monetracka.shared.domain.repository.TransactionRepository
 import com.monetracka.shared.ui.home.HomeScreenModel
-import com.monetracka.shared.ui.transaction.AddTransactionScreenModel
 import com.monetracka.shared.ui.transaction.TransactionListScreenModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -22,6 +21,7 @@ fun sharedModule(): Module = module {
     // Repositories
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get()) }
+    single<com.monetracka.shared.domain.repository.AccountRepository> { com.monetracka.shared.data.repository.AccountRepositoryImpl(get()) }
     single<com.monetracka.shared.domain.quote.QuoteRepository> { com.monetracka.shared.domain.quote.QuoteRepositoryImpl() }
 
     // Coach Engine
@@ -29,6 +29,5 @@ fun sharedModule(): Module = module {
 
     // Screen Models
     factory { HomeScreenModel(get(), get(), get(), get()) }
-    factory { AddTransactionScreenModel(get(), get()) }
     factory { TransactionListScreenModel(get(), get()) }
 }

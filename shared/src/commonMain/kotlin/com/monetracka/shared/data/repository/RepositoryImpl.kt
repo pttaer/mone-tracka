@@ -2,11 +2,12 @@ package com.monetracka.shared.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import app.cash.sqldelight.coroutines.mapToOne
 import com.monetracka.db.MoneTrackaDatabase
+import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
+import com.monetracka.shared.domain.repository.AccountRepository
 import com.monetracka.shared.domain.repository.CategoryRepository
 import com.monetracka.shared.domain.repository.TransactionRepository
 import kotlinx.coroutines.Dispatchers
@@ -14,9 +15,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
 
 class TransactionRepositoryImpl(
     private val database: MoneTrackaDatabase,
@@ -31,27 +29,14 @@ class TransactionRepositoryImpl(
             .map { list -> list.map { it.toDomain() } }
     }
 
-    override fun getTransactionsByMonth(yearMonth: String): Flow<List<Transaction>> {
-        val (startMillis, endMillis) = getMonthRange(yearMonth)
-        return queries.getTransactionsByMonth(startMillis, endMillis)
-            .asFlow()
-            .mapToList(Dispatchers.IO)
-            .map { list -> list.map { it.toDomain() } }
-    }
-
-    override fun getTransactionsByCategory(categoryId: Long): Flow<List<Transaction>> {
-        return queries.getTransactionsByCategory(categoryId)
-            .asFlow()
-            .mapToList(Dispatchers.IO)
-            .map { list -> list.map { it.toDomain() } }
-    }
-
     override suspend fun insertTransaction(transaction: Transaction): Long {
         val now = Clock.System.now().toEpochMilliseconds()
         queries.insertTransaction(
             amount = transaction.amount,
             type = transaction.type.name,
             categoryId = transaction.categoryId,
+            accountId = transaction.accountId,
+            toAccountId = transaction.toAccountId,
             note = transaction.note,
             dateMillis = transaction.dateMillis,
             createdAtMillis = now,
@@ -59,44 +44,8 @@ class TransactionRepositoryImpl(
         return queries.lastInsertedTransactionId().executeAsOne()
     }
 
-    override suspend fun updateTransaction(transaction: Transaction) {
-        queries.updateTransaction(
-            amount = transaction.amount,
-            type = transaction.type.name,
-            categoryId = transaction.categoryId,
-            note = transaction.note,
-            dateMillis = transaction.dateMillis,
-            id = transaction.id,
-        )
-    }
-
     override suspend fun deleteTransaction(id: Long) {
         queries.deleteTransaction(id)
-    }
-
-    override fun getTotalByTypeAndMonth(type: TransactionType, yearMonth: String): Flow<Double> {
-        val (startMillis, endMillis) = getMonthRange(yearMonth)
-        return queries.getTotalByTypeAndDateRange(type.name, startMillis, endMillis)
-            .asFlow()
-            .mapToOne(Dispatchers.IO)
-    }
-
-    private fun getMonthRange(yearMonth: String): Pair<Long, Long> {
-        val parts = yearMonth.split("-")
-        val year = parts[0].toInt()
-        val month = parts[1].toInt()
-
-        val startDate = kotlinx.datetime.LocalDate(year, month, 1)
-        val endDate = if (month == 12) {
-            kotlinx.datetime.LocalDate(year + 1, 1, 1)
-        } else {
-            kotlinx.datetime.LocalDate(year, month + 1, 1)
-        }
-
-        val tz = TimeZone.currentSystemDefault()
-        val startMillis = startDate.atStartOfDayIn(tz).toEpochMilliseconds()
-        val endMillis = endDate.atStartOfDayIn(tz).toEpochMilliseconds()
-        return Pair(startMillis, endMillis)
     }
 }
 
@@ -113,13 +62,6 @@ class CategoryRepositoryImpl(
             .map { list -> list.map { it.toDomain() } }
     }
 
-    override fun getCategoriesByType(type: TransactionType): Flow<List<Category>> {
-        return queries.getCategoriesByType(type.name)
-            .asFlow()
-            .mapToList(Dispatchers.IO)
-            .map { list -> list.map { it.toDomain() } }
-    }
-
     override suspend fun insertCategory(category: Category): Long {
         queries.insertCategory(
             name = category.name,
@@ -129,19 +71,6 @@ class CategoryRepositoryImpl(
             isDefault = if (category.isDefault) 1L else 0L,
         )
         return queries.lastInsertedCategoryId().executeAsOne()
-    }
-
-    override suspend fun updateCategory(category: Category) {
-        queries.updateCategory(
-            name = category.name,
-            emoji = category.emoji,
-            colorIndex = category.colorIndex.toLong(),
-            id = category.id,
-        )
-    }
-
-    override suspend fun deleteCategory(id: Long) {
-        queries.deleteCategory(id)
     }
 
     override suspend fun insertDefaultCategories() {
@@ -166,13 +95,59 @@ class CategoryRepositoryImpl(
             Category(name = "Investment", emoji = "📈", colorIndex = 2, type = TransactionType.INCOME),
             Category(name = "Gift", emoji = "🎁", colorIndex = 3, type = TransactionType.INCOME),
             Category(name = "Other Income", emoji = "💵", colorIndex = 4, type = TransactionType.INCOME),
+            // Transfer category
+            Category(name = "Transfer", emoji = "🔁", colorIndex = 0, type = TransactionType.TRANSFER),
         )
 
         defaults.forEach { insertCategory(it) }
     }
 }
 
+class AccountRepositoryImpl(
+    private val database: MoneTrackaDatabase,
+) : AccountRepository {
+
+    private val queries = database.moneTrackaDatabaseQueries
+
+    override fun getAllAccounts(): Flow<List<Account>> {
+        return queries.getAllAccounts()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun insertAccount(account: Account): Long {
+        queries.insertAccount(
+            name = account.name,
+            emoji = account.emoji,
+            initialBalance = account.initialBalance,
+            description = account.description,
+        )
+        return queries.lastInsertedAccountId().executeAsOne()
+    }
+
+    override suspend fun deleteAccount(id: Long) {
+        queries.deleteAccount(id)
+    }
+
+    override suspend fun insertDefaultAccounts() {
+        val count = queries.getAccountCount().executeAsOne()
+        if (count > 0) return
+
+        insertAccount(Account(name = "Main Checking", emoji = "🏦", initialBalance = 0.0, description = "Daily operational account"))
+        insertAccount(Account(name = "Cash Wallet", emoji = "💵", initialBalance = 0.0, description = "Physical cash on hand"))
+    }
+}
+
 // Extension functions to map DB entities to domain models
+private fun com.monetracka.db.AccountEntity.toDomain() = Account(
+    id = id,
+    name = name,
+    emoji = emoji,
+    initialBalance = initialBalance,
+    description = description,
+)
+
 private fun com.monetracka.db.CategoryEntity.toDomain() = Category(
     id = id,
     name = name,
@@ -187,7 +162,10 @@ private fun com.monetracka.db.TransactionEntity.toDomain() = Transaction(
     amount = amount,
     type = TransactionType.valueOf(type),
     categoryId = categoryId,
+    accountId = accountId,
+    toAccountId = toAccountId,
     note = note,
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
 )
+
