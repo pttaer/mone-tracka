@@ -26,6 +26,7 @@ import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.domain.util.CurrencyFormatter
 import com.monetracka.shared.ui.home.components.*
 import com.monetracka.shared.ui.theme.CategoryColors
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 import com.monetracka.shared.ui.transaction.AddTransactionBottomSheet
 import com.monetracka.shared.ui.transaction.TransactionListScreen
 
@@ -65,52 +66,21 @@ class HomeScreen : Screen {
                     listState = analyticsListState,
                     onOpenAdd = { screenModel.onIntent(HomeIntent.OpenAddTransaction(it)) }
                 )
-                3 -> BudgetsView(state = state, listState = budgetsListState)
-                4 -> SettingsView(state = state, listState = settingsListState)
-            }
-
-            // Native Material3 Bottom Navigation Bar
-            NavigationBar(
-                modifier = Modifier.align(Alignment.BottomCenter),
-                containerColor = Color(0xFF0C1622).copy(alpha = 0.95f)
-            ) {
-                val navItems = listOf(
-                    "⊞" to "Overview",
-                    "∿" to "Analytics",
-                    "+" to "Add",
-                    "◎" to "Budgets",
-                    "⚙" to "Settings"
+                2 -> BudgetsView(
+                    state = state,
+                    listState = budgetsListState,
+                    onOpenAdjustBudget = { screenModel.onIntent(HomeIntent.OpenAdjustBudget) }
                 )
-
-                navItems.forEachIndexed { i, (icon, label) ->
-                    val isAdd = i == 2
-                    NavigationBarItem(
-                        selected = !isAdd && selectedTab == i,
-                        onClick = {
-                            if (isAdd) {
-                                screenModel.onIntent(HomeIntent.OpenAddTransaction(TransactionType.EXPENSE))
-                            } else {
-                                selectedTab = i
-                            }
-                        },
-                        icon = {
-                            Text(
-                                text = icon,
-                                fontSize = if (isAdd) 24.sp else 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        label = { Text(label, fontSize = 10.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF00D09C),
-                            selectedTextColor = Color(0xFF00D09C),
-                            unselectedIconColor = Color(0xFF54687F),
-                            unselectedTextColor = Color(0xFF54687F),
-                            indicatorColor = if (isAdd) Color(0xFF00D09C).copy(alpha = 0.2f) else Color(0xFF172535)
-                        )
-                    )
-                }
+                3 -> SettingsView(state = state, listState = settingsListState)
             }
+
+            // Floating Navigation Bar Dock
+            FloatingNavBar(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                onOpenAdd = { screenModel.onIntent(HomeIntent.OpenAddTransaction(TransactionType.EXPENSE)) },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
 
             // Quick Add Bottom Sheet
             AddTransactionBottomSheet(
@@ -168,6 +138,18 @@ class HomeScreen : Screen {
                                 description = desc
                             )
                         )
+                    }
+                )
+            }
+
+            // Adjust Monthly Budget Target Bottom Sheet
+            if (state.isAdjustBudgetOpen) {
+                AdjustBudgetBottomSheet(
+                    currentBudget = state.monthlyBudgetLimit,
+                    currency = state.currency,
+                    onDismiss = { screenModel.onIntent(HomeIntent.DismissAdjustBudget) },
+                    onSave = { newLimit ->
+                        screenModel.onIntent(HomeIntent.UpdateMonthlyBudget(newLimit))
                     }
                 )
             }
@@ -509,10 +491,27 @@ class HomeScreen : Screen {
     }
 
     @Composable
-    private fun BudgetsView(state: HomeUiState, listState: LazyListState) {
+    private fun BudgetsView(
+        state: HomeUiState,
+        listState: LazyListState,
+        onOpenAdjustBudget: () -> Unit
+    ) {
         val totalSpent = remember(state.categorySpends) { state.categorySpends.sumOf { it.amount } }
-        val monthlyBudget = 2500.0
-        val remaining = remember(totalSpent) { (monthlyBudget - totalSpent).coerceAtLeast(0.0) }
+        val monthlyBudget = state.monthlyBudgetLimit
+        val remaining = remember(totalSpent, monthlyBudget) { (monthlyBudget - totalSpent).coerceAtLeast(0.0) }
+        val burnRateFraction = remember(totalSpent, monthlyBudget) {
+            if (monthlyBudget > 0) (totalSpent / monthlyBudget).toFloat().coerceIn(0f, 1f) else 1f
+        }
+        val burnStatus = when {
+            totalSpent > monthlyBudget -> "Over Budget"
+            totalSpent > monthlyBudget * 0.8 -> "Approaching Limit"
+            else -> "On Track"
+        }
+        val burnColor = when {
+            totalSpent > monthlyBudget -> MoneTrackaColors.CoralDanger
+            totalSpent > monthlyBudget * 0.8 -> MoneTrackaColors.AmberWarning
+            else -> MoneTrackaColors.MintPrimary
+        }
 
         LazyColumn(
             state = listState,
@@ -525,21 +524,83 @@ class HomeScreen : Screen {
             }
             item(key = "budget_card") {
                 Column(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFF172535)).border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp)).padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(MoneTrackaColors.SurfaceLevel1)
+                        .border(1.dp, MoneTrackaColors.BorderGlassLuminous, RoundedCornerShape(22.dp))
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Monthly Limit", color = Color(0xFF8FA2B6), fontSize = 12.sp)
-                        Text("Remaining: ${CurrencyFormatter.format(remaining, state.currency)}", color = if (remaining > 0) Color(0xFF00D09C) else Color(0xFFFF5A79), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Monthly Target", color = MoneTrackaColors.TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = burnStatus,
+                                color = burnColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White.copy(alpha = 0.08f))
+                                .clickable { onOpenAdjustBudget() }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text("Adjust Target", color = MoneTrackaColors.MintPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
-                    Text(text = "${CurrencyFormatter.format(totalSpent, state.currency)} / ${CurrencyFormatter.format(monthlyBudget, state.currency)}", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                    Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)).background(Color.White.copy(alpha = 0.08f))) {
-                        Box(modifier = Modifier.fillMaxWidth(fraction = (totalSpent / monthlyBudget).toFloat().coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(999.dp)).background(Color(0xFF00D09C)))
+
+                    Text(
+                        text = "${CurrencyFormatter.format(totalSpent, state.currency)} / ${CurrencyFormatter.format(monthlyBudget, state.currency)}",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(Color.White.copy(alpha = 0.08f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = burnRateFraction)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(burnColor)
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Remaining",
+                            color = MoneTrackaColors.TextSecondary,
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = CurrencyFormatter.format(remaining, state.currency),
+                            color = if (remaining > 0) MoneTrackaColors.MintPrimary else MoneTrackaColors.CoralDanger,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
             item(key = "limits_title") {
-                Text(text = "Category Limits", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = "Category Breakdown", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
             items(
                 items = state.categorySpends,
@@ -547,11 +608,22 @@ class HomeScreen : Screen {
             ) { cat ->
                 val catColor = CategoryColors.getOrElse(cat.colorIndex) { Color(cat.colorHex) }
                 Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF172535)).padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MoneTrackaColors.SurfaceLevel1)
+                        .border(1.dp, MoneTrackaColors.BorderGlass, RoundedCornerShape(14.dp))
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(cat.category, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    Text("${CurrencyFormatter.format(cat.amount, state.currency)} / ${CurrencyFormatter.format(500.0, state.currency)}", color = catColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "${CurrencyFormatter.format(cat.amount, state.currency)} (${cat.percentage.toInt()}%)",
+                        color = catColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
