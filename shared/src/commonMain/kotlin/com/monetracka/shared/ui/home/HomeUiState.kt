@@ -35,6 +35,8 @@ data class HomeUiState(
     val userName: String = "User",
     val userInitials: String = "U",
     val currency: String = "USD",
+    val monthlyBudgetLimit: Double = 2500.0,
+    val isAdjustBudgetOpen: Boolean = false,
     val isLoading: Boolean = false
 )
 
@@ -57,5 +59,8 @@ sealed interface HomeIntent {
     data object DismissAddAccount : HomeIntent
     data class CreateAccount(val name: String, val emoji: String, val initialBalance: Double, val description: String = "") : HomeIntent
     data class DeleteAccount(val id: Long) : HomeIntent
+    data class UpdateMonthlyBudget(val newLimit: Double) : HomeIntent
+    data object OpenAdjustBudget : HomeIntent
+    data object DismissAdjustBudget : HomeIntent
 }
 

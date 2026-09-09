@@ -132,6 +132,8 @@ class HomeScreenModel(
                     userName = userProfile?.userName ?: "User",
                     userInitials = userProfile?.initials ?: "U",
                     currency = userProfile?.currency ?: "USD",
+                    monthlyBudgetLimit = userProfile?.monthlyBudgetLimit ?: 2500.0,
+                    isAdjustBudgetOpen = mutableState.value.isAdjustBudgetOpen,
                     isLoading = false
                 )
             }.collect { newState ->
@@ -230,6 +232,21 @@ class HomeScreenModel(
             is HomeIntent.DeleteAccount -> {
                 screenModelScope.launch {
                     accountRepository.deleteAccount(intent.id)
+                }
+            }
+            HomeIntent.OpenAdjustBudget -> {
+                mutableState.value = mutableState.value.copy(isAdjustBudgetOpen = true)
+            }
+            HomeIntent.DismissAdjustBudget -> {
+                mutableState.value = mutableState.value.copy(isAdjustBudgetOpen = false)
+            }
+            is HomeIntent.UpdateMonthlyBudget -> {
+                screenModelScope.launch {
+                    userProfileRepository?.updateMonthlyBudget(intent.newLimit)
+                    mutableState.value = mutableState.value.copy(
+                        monthlyBudgetLimit = intent.newLimit,
+                        isAdjustBudgetOpen = false
+                    )
                 }
             }
         }

@@ -39,11 +39,16 @@ class FakeAccountRepository(private val accounts: List<Account>) : AccountReposi
     override suspend fun insertDefaultAccounts() {}
 }
 
-class FakeUserProfileRepository(private val profile: com.monetracka.shared.domain.model.UserProfile?) : com.monetracka.shared.domain.repository.UserProfileRepository {
-    override fun getUserProfile(): Flow<com.monetracka.shared.domain.model.UserProfile?> = flowOf(profile)
-    override suspend fun saveUserProfile(profile: com.monetracka.shared.domain.model.UserProfile) {}
-    override suspend fun updateMonthlyBudget(limit: Double) {}
-    override suspend fun hasCompletedOnboarding(): Boolean = profile?.hasCompletedOnboarding ?: false
+class FakeUserProfileRepository(profile: com.monetracka.shared.domain.model.UserProfile?) : com.monetracka.shared.domain.repository.UserProfileRepository {
+    private val profileFlow = kotlinx.coroutines.flow.MutableStateFlow(profile)
+    override fun getUserProfile(): Flow<com.monetracka.shared.domain.model.UserProfile?> = profileFlow
+    override suspend fun saveUserProfile(profile: com.monetracka.shared.domain.model.UserProfile) {
+        profileFlow.value = profile
+    }
+    override suspend fun updateMonthlyBudget(limit: Double) {
+        profileFlow.value = profileFlow.value?.copy(monthlyBudgetLimit = limit)
+    }
+    override suspend fun hasCompletedOnboarding(): Boolean = profileFlow.value?.hasCompletedOnboarding ?: false
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -203,6 +208,25 @@ class HomeScreenModelTest {
         // tx 3 (2000L): -20 -> 80
         // tx 2 (3000L): -30 -> 50
         assertEquals(listOf(100f, 80f, 50f), state.sparklinePoints)
+    }
+
+    @Test
+    fun testUpdateMonthlyBudgetIntent() = runTest(testDispatcher) {
+        val userRepo = FakeUserProfileRepository(
+            com.monetracka.shared.domain.model.UserProfile(userName = "Thanh", monthlyBudgetLimit = 2500.0)
+        )
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(emptyList()),
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList()),
+            userProfileRepository = userRepo
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.UpdateMonthlyBudget(3200.0))
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(3200.0, viewModel.state.value.monthlyBudgetLimit)
     }
 }
 
