@@ -34,4 +34,13 @@ class UserProfileTest {
         val profile = UserProfile(userName = "   ")
         assertEquals("U", profile.initials)
     }
+
+    @Test
+    fun testUserProfileIncludesMonthlyBudgetLimit() {
+        val defaultProfile = UserProfile(userName = "Thanh")
+        assertEquals(2500.0, defaultProfile.monthlyBudgetLimit)
+
+        val customProfile = UserProfile(userName = "Thanh", monthlyBudgetLimit = 3500.0)
+        assertEquals(3500.0, customProfile.monthlyBudgetLimit)
+    }
 }

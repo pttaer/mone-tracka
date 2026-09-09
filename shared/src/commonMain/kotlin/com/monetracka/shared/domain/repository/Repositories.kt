@@ -28,6 +28,7 @@ interface AccountRepository {
 interface UserProfileRepository {
     fun getUserProfile(): Flow<UserProfile?>
     suspend fun saveUserProfile(profile: UserProfile)
+    suspend fun updateMonthlyBudget(limit: Double)
     suspend fun hasCompletedOnboarding(): Boolean
 }
 

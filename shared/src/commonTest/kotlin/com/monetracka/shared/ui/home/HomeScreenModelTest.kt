@@ -42,6 +42,7 @@ class FakeAccountRepository(private val accounts: List<Account>) : AccountReposi
 class FakeUserProfileRepository(private val profile: com.monetracka.shared.domain.model.UserProfile?) : com.monetracka.shared.domain.repository.UserProfileRepository {
     override fun getUserProfile(): Flow<com.monetracka.shared.domain.model.UserProfile?> = flowOf(profile)
     override suspend fun saveUserProfile(profile: com.monetracka.shared.domain.model.UserProfile) {}
+    override suspend fun updateMonthlyBudget(limit: Double) {}
     override suspend fun hasCompletedOnboarding(): Boolean = profile?.hasCompletedOnboarding ?: false
 }
 

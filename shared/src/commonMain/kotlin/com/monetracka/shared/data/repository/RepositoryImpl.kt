@@ -157,11 +157,20 @@ class UserProfileRepositoryImpl(
     }
 
     override suspend fun saveUserProfile(profile: UserProfile) {
-        queries.insertOrUpdateUserProfile(
-            userName = profile.userName,
-            currency = profile.currency,
-            hasCompletedOnboarding = if (profile.hasCompletedOnboarding) 1L else 0L
-        )
+        withContext(Dispatchers.IO) {
+            queries.insertOrUpdateUserProfile(
+                userName = profile.userName,
+                currency = profile.currency,
+                hasCompletedOnboarding = if (profile.hasCompletedOnboarding) 1L else 0L,
+                monthlyBudgetLimit = profile.monthlyBudgetLimit
+            )
+        }
+    }
+
+    override suspend fun updateMonthlyBudget(limit: Double) {
+        withContext(Dispatchers.IO) {
+            queries.updateMonthlyBudget(limit)
+        }
     }
 
     override suspend fun hasCompletedOnboarding(): Boolean = withContext(Dispatchers.IO) {
@@ -174,7 +183,8 @@ class UserProfileRepositoryImpl(
 private fun com.monetracka.db.UserProfileEntity.toDomain() = UserProfile(
     userName = userName,
     currency = currency,
-    hasCompletedOnboarding = hasCompletedOnboarding == 1L
+    hasCompletedOnboarding = hasCompletedOnboarding == 1L,
+    monthlyBudgetLimit = monthlyBudgetLimit
 )
 
 private fun com.monetracka.db.AccountEntity.toDomain() = Account(

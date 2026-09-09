@@ -26,6 +26,9 @@ class OnboardingFakeUserProfileRepo : UserProfileRepository {
     override suspend fun saveUserProfile(profile: UserProfile) {
         savedProfile = profile
     }
+    override suspend fun updateMonthlyBudget(limit: Double) {
+        savedProfile = savedProfile?.copy(monthlyBudgetLimit = limit)
+    }
     override suspend fun hasCompletedOnboarding(): Boolean = savedProfile?.hasCompletedOnboarding ?: false
 }
 
