@@ -328,7 +328,10 @@ class HomeScreen : Screen {
             }
 
             item(key = "categories_chart") {
-                CategoryInsightsCard(categorySpends = state.categorySpends)
+                CategoryInsightsCard(
+                    categorySpends = state.categorySpends,
+                    currency = state.currency
+                )
             }
 
             // Recent Transactions Header
@@ -453,7 +456,10 @@ class HomeScreen : Screen {
             }
 
             item(key = "analytics_chart") {
-                CategoryInsightsCard(categorySpends = state.categorySpends)
+                CategoryInsightsCard(
+                    categorySpends = state.categorySpends,
+                    currency = state.currency
+                )
             }
 
             item(key = "breakdown_title") {

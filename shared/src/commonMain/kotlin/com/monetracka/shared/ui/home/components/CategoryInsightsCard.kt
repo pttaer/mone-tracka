@@ -14,15 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.model.CategorySpend
+import com.monetracka.shared.domain.util.CurrencyFormatter
 
 @Composable
 fun CategoryInsightsCard(
     categorySpends: List<CategorySpend>,
+    currency: String = "USD",
     modifier: Modifier = Modifier
 ) {
-    val totalSpend = categorySpends.sumOf { it.amount }
-    val formattedTotal = "$%.1fk".format(totalSpend / 1000.0)
-
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -35,7 +34,7 @@ fun CategoryInsightsCard(
     ) {
         CategoryDonutChart(
             categorySpends = categorySpends,
-            totalText = if (totalSpend > 0) formattedTotal else "$0"
+            currency = currency
         )
 
         Column(
@@ -59,7 +58,7 @@ fun CategoryInsightsCard(
                             Text(text = cat.category, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFD1DBE6))
                         }
                         Text(
-                            text = "$%.0f (%.0f%%)".format(cat.amount, cat.percentage),
+                            text = "${CurrencyFormatter.format(cat.amount, currency)} (${cat.percentage.toInt()}%)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
