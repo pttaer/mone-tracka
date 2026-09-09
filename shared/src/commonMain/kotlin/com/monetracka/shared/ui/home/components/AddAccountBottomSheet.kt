@@ -19,12 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.monetracka.shared.domain.util.CurrencyFormatter
 
 private val ACCOUNT_EMOJIS = listOf("🏦", "💵", "💳", "🪙", "🎯", "💼", "📈", "🏝️", "👛", "🛡️")
+private val DECIMAL_REGEX = Regex("""^\d*\.?\d{0,2}$""")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddAccountBottomSheet(
+    currency: String = "USD",
     onDismiss: () -> Unit,
     onCreateAccount: (name: String, emoji: String, initialBalance: Double, description: String) -> Unit,
     modifier: Modifier = Modifier
@@ -144,12 +147,12 @@ fun AddAccountBottomSheet(
                 OutlinedTextField(
                     value = balanceText,
                     onValueChange = { input ->
-                        if (input.isEmpty() || input.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
+                        if (input.isEmpty() || input.matches(DECIMAL_REGEX)) {
                             balanceText = input
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    prefix = { Text(text = "$", color = Color(0xFF00D09C), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                    prefix = { Text(text = CurrencyFormatter.symbol(currency), color = Color(0xFF00D09C), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                     placeholder = { Text("0.00", color = Color(0xFF54687F), fontSize = 15.sp) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

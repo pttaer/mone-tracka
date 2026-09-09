@@ -127,4 +127,23 @@ class OnboardingScreenModelTest {
         assertEquals("GBP", profile?.currency)
         assertEquals(true, profile?.hasCompletedOnboarding)
     }
+
+    @Test
+    fun testBalanceSanitizationAndDoubleCompleteGuard() = runTest(testDispatcher) {
+        val userRepo = OnboardingFakeUserProfileRepo()
+        val accountRepo = OnboardingFakeAccountRepo()
+        val categoryRepo = OnboardingFakeCategoryRepo()
+        val model = OnboardingScreenModel(userRepo, accountRepo, categoryRepo)
+
+        model.onCheckingBalanceChanged("12.34.56")
+        assertEquals("12.3456", model.state.value.checkingBalance)
+
+        var callCount = 0
+        model.completeOnboarding { callCount++ }
+        model.completeOnboarding { callCount++ }
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(1, callCount)
+        assertEquals(2, accountRepo.insertedAccounts.size)
+    }
 }

@@ -105,5 +105,103 @@ class HomeScreenModelTest {
         assertEquals("SC", viewModel.state.value.userInitials)
         assertEquals("EUR", viewModel.state.value.currency)
     }
+
+    @Test
+    fun testTransferBalancesAndNetBalance() = runTest(testDispatcher) {
+        val fakeTxs = listOf(
+            Transaction(id = 1L, amount = 30.0, type = TransactionType.TRANSFER, categoryId = 1L, accountId = 1L, toAccountId = 2L, dateMillis = 1000L)
+        )
+        val fakeCats = listOf(
+            Category(id = 1L, name = "General", emoji = "🔄", colorIndex = 0, type = TransactionType.TRANSFER)
+        )
+        val fakeAccounts = listOf(
+            Account(id = 1L, name = "Checking", emoji = "🏦", initialBalance = 100.0),
+            Account(id = 2L, name = "Savings", emoji = "💰", initialBalance = 50.0)
+        )
+
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(fakeTxs),
+            categoryRepository = FakeCategoryRepository(fakeCats),
+            accountRepository = FakeAccountRepository(fakeAccounts)
+        )
+
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.state.value
+        val acc1 = state.accounts.first { it.account.id == 1L }
+        val acc2 = state.accounts.first { it.account.id == 2L }
+
+        assertEquals(70.0, acc1.balance, 0.01)
+        assertEquals(80.0, acc2.balance, 0.01)
+        assertEquals(150.0, state.totalBalance, 0.01)
+    }
+
+    @Test
+    fun testCategoryExpensesAggregation() = runTest(testDispatcher) {
+        val fakeTxs = listOf(
+            Transaction(id = 1L, amount = 40.0, type = TransactionType.EXPENSE, categoryId = 1L, accountId = 1L, dateMillis = 1000L),
+            Transaction(id = 2L, amount = 70.0, type = TransactionType.EXPENSE, categoryId = 2L, accountId = 1L, dateMillis = 2000L),
+            Transaction(id = 3L, amount = 25.0, type = TransactionType.EXPENSE, categoryId = 1L, accountId = 1L, dateMillis = 3000L)
+        )
+        val fakeCats = listOf(
+            Category(id = 1L, name = "Dining", emoji = "🍕", colorIndex = 1, type = TransactionType.EXPENSE),
+            Category(id = 2L, name = "Groceries", emoji = "🛒", colorIndex = 2, type = TransactionType.EXPENSE)
+        )
+        val fakeAccounts = listOf(
+            Account(id = 1L, name = "Checking", emoji = "🏦", initialBalance = 500.0)
+        )
+
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(fakeTxs),
+            categoryRepository = FakeCategoryRepository(fakeCats),
+            accountRepository = FakeAccountRepository(fakeAccounts)
+        )
+
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(2, state.categorySpends.size)
+        // Highest spend first: Groceries (70.0), then Dining (65.0)
+        assertEquals("Groceries", state.categorySpends[0].category)
+        assertEquals(70.0, state.categorySpends[0].amount, 0.01)
+        assertEquals("Dining", state.categorySpends[1].category)
+        assertEquals(65.0, state.categorySpends[1].amount, 0.01)
+    }
+
+    @Test
+    fun testSparklineAndRecentTransactionsOrdering() = runTest(testDispatcher) {
+        val fakeTxs = listOf(
+            Transaction(id = 1L, amount = 100.0, type = TransactionType.INCOME, categoryId = 1L, accountId = 1L, dateMillis = 1000L),
+            Transaction(id = 2L, amount = 30.0, type = TransactionType.EXPENSE, categoryId = 2L, accountId = 1L, dateMillis = 3000L),
+            Transaction(id = 3L, amount = 20.0, type = TransactionType.EXPENSE, categoryId = 2L, accountId = 1L, dateMillis = 2000L)
+        )
+        val fakeCats = listOf(
+            Category(id = 1L, name = "Salary", emoji = "💰", colorIndex = 0, type = TransactionType.INCOME),
+            Category(id = 2L, name = "Food", emoji = "🍔", colorIndex = 1, type = TransactionType.EXPENSE)
+        )
+        val fakeAccounts = listOf(
+            Account(id = 1L, name = "Checking", emoji = "🏦", initialBalance = 0.0)
+        )
+
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(fakeTxs),
+            categoryRepository = FakeCategoryRepository(fakeCats),
+            accountRepository = FakeAccountRepository(fakeAccounts)
+        )
+
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.state.value
+        // Recent transactions should be ordered desc by dateMillis: 3000L, 2000L, 1000L
+        assertEquals(3000L, state.recentTransactions[0].dateMillis)
+        assertEquals(2000L, state.recentTransactions[1].dateMillis)
+        assertEquals(1000L, state.recentTransactions[2].dateMillis)
+
+        // Sparkline should follow chronological order:
+        // tx 1 (1000L): +100 -> 100
+        // tx 3 (2000L): -20 -> 80
+        // tx 2 (3000L): -30 -> 50
+        assertEquals(listOf(100f, 80f, 50f), state.sparklinePoints)
+    }
 }
 

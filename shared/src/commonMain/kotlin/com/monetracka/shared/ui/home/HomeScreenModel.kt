@@ -38,46 +38,65 @@ class HomeScreenModel(
             ) { transactions, categories, accounts, userProfile ->
                 val categoryMap = categories.associateBy { it.id }
 
+                var totalIncome = 0.0
+                var totalExpense = 0.0
+                val accountInflows = mutableMapOf<Long, Double>()
+                val accountOutflows = mutableMapOf<Long, Double>()
+                val categoryExpenses = mutableMapOf<Long, Double>()
+
+                for (tx in transactions) {
+                    when (tx.type) {
+                        TransactionType.INCOME -> {
+                            totalIncome += tx.amount
+                            accountInflows[tx.accountId] = (accountInflows[tx.accountId] ?: 0.0) + tx.amount
+                        }
+                        TransactionType.EXPENSE -> {
+                            totalExpense += tx.amount
+                            accountOutflows[tx.accountId] = (accountOutflows[tx.accountId] ?: 0.0) + tx.amount
+                            categoryExpenses[tx.categoryId] = (categoryExpenses[tx.categoryId] ?: 0.0) + tx.amount
+                        }
+                        TransactionType.TRANSFER -> {
+                            accountOutflows[tx.accountId] = (accountOutflows[tx.accountId] ?: 0.0) + tx.amount
+                            tx.toAccountId?.let { toId ->
+                                accountInflows[toId] = (accountInflows[toId] ?: 0.0) + tx.amount
+                            }
+                        }
+                    }
+                }
+
                 val accountUiList = accounts.map { acc ->
-                    val inflows = transactions.filter { it.type == TransactionType.INCOME && it.accountId == acc.id }.sumOf { it.amount } +
-                        transactions.filter { it.type == TransactionType.TRANSFER && it.toAccountId == acc.id }.sumOf { it.amount }
-                    val outflows = transactions.filter { it.type == TransactionType.EXPENSE && it.accountId == acc.id }.sumOf { it.amount } +
-                        transactions.filter { it.type == TransactionType.TRANSFER && it.accountId == acc.id }.sumOf { it.amount }
+                    val inflows = accountInflows[acc.id] ?: 0.0
+                    val outflows = accountOutflows[acc.id] ?: 0.0
                     AccountUiModel(
                         account = acc,
                         balance = acc.initialBalance + inflows - outflows
                     )
                 }
 
-                val totalIncome = transactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
-                val totalExpense = transactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
                 val totalNetBalance = if (accountUiList.isNotEmpty()) {
                     accountUiList.sumOf { it.balance }
                 } else {
                     totalIncome - totalExpense
                 }
 
-                val expensesByCategory = transactions
-                    .filter { it.type == TransactionType.EXPENSE }
-                    .groupBy { it.categoryId }
-                    .map { (catId, txList) ->
-                        val cat = categoryMap[catId]
-                        val catName = cat?.name ?: "Other"
-                        val colorIdx = cat?.colorIndex ?: 0
-                        val hex = com.monetracka.shared.ui.theme.CategoryColorHexes.getOrElse(colorIdx) { 0xFF00D09CL }
-                        CategorySpend(
-                            category = catName,
-                            amount = txList.sumOf { it.amount },
-                            totalSpend = totalExpense,
-                            colorIndex = colorIdx,
-                            colorHex = hex
-                        )
-                    }
-                    .sortedByDescending { it.amount }
+                val expensesByCategory = categoryExpenses.map { (catId, amount) ->
+                    val cat = categoryMap[catId]
+                    val catName = cat?.name ?: "Other"
+                    val colorIdx = cat?.colorIndex ?: 0
+                    val hex = com.monetracka.shared.ui.theme.CategoryColorHexes.getOrElse(colorIdx) { 0xFF00D09CL }
+                    CategorySpend(
+                        category = catName,
+                        amount = amount,
+                        totalSpend = totalExpense,
+                        colorIndex = colorIdx,
+                        colorHex = hex
+                    )
+                }.sortedByDescending { it.amount }
 
+                val sortedByDateDesc = transactions.sortedByDescending { it.dateMillis }
                 val sparkline = if (transactions.isNotEmpty()) {
                     var running = 0.0
-                    transactions.sortedBy { it.dateMillis }.takeLast(10).map {
+                    sortedByDateDesc.take(10).reversed().map {
                         running += when (it.type) {
                             TransactionType.INCOME -> it.amount
                             TransactionType.EXPENSE -> -it.amount
@@ -99,7 +118,7 @@ class HomeScreenModel(
                     monthlyTrendAmount = totalIncome - totalExpense,
                     sparklinePoints = sparkline,
                     categorySpends = expensesByCategory,
-                    recentTransactions = transactions.sortedByDescending { it.dateMillis }.take(20),
+                    recentTransactions = sortedByDateDesc.take(20),
                     categories = categoryMap,
                     accounts = accountUiList,
                     coachInsight = insight,

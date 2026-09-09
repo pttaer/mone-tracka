@@ -41,12 +41,12 @@ class OnboardingScreenModel(
     }
 
     fun onCheckingBalanceChanged(amount: String) {
-        val filtered = amount.filter { it.isDigit() || it == '.' }
+        val filtered = amount.filterIndexed { i, c -> c.isDigit() || (c == '.' && '.' !in amount.substring(0, i)) }
         mutableState.value = mutableState.value.copy(checkingBalance = filtered)
     }
 
     fun onCashBalanceChanged(amount: String) {
-        val filtered = amount.filter { it.isDigit() || it == '.' }
+        val filtered = amount.filterIndexed { i, c -> c.isDigit() || (c == '.' && '.' !in amount.substring(0, i)) }
         mutableState.value = mutableState.value.copy(cashBalance = filtered)
     }
 
@@ -63,8 +63,9 @@ class OnboardingScreenModel(
     }
 
     fun completeOnboarding(onSuccess: () -> Unit) {
+        if (mutableState.value.isLoading) return
+        mutableState.value = mutableState.value.copy(isLoading = true)
         screenModelScope.launch {
-            mutableState.value = mutableState.value.copy(isLoading = true)
             val checking = mutableState.value.checkingBalance.toDoubleOrNull() ?: 0.0
             val cash = mutableState.value.cashBalance.toDoubleOrNull() ?: 0.0
             val finalName = mutableState.value.userName.trim().ifBlank { "User" }

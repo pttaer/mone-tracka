@@ -10,6 +10,8 @@ object CurrencyFormatter {
         "VND" to "₫"
     )
 
+    fun symbol(currency: String = "USD"): String = SYMBOLS[currency] ?: "$"
+
     fun format(amount: Double, currency: String = "USD"): String {
         val (intPart, decPart) = splitAmount(amount, currency)
         return "$intPart$decPart"

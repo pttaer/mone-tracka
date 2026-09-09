@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 
 class TransactionRepositoryImpl(
@@ -163,9 +164,9 @@ class UserProfileRepositoryImpl(
         )
     }
 
-    override suspend fun hasCompletedOnboarding(): Boolean {
+    override suspend fun hasCompletedOnboarding(): Boolean = withContext(Dispatchers.IO) {
         val profile = queries.getUserProfile().executeAsOneOrNull()
-        return profile?.hasCompletedOnboarding == 1L
+        profile?.hasCompletedOnboarding == 1L
     }
 }
 

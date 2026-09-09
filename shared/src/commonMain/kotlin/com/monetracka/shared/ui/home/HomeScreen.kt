@@ -139,6 +139,7 @@ class HomeScreen : Screen {
                     targetAccount = state.transferTargetAccount!!,
                     sourceBalance = sourceBalance,
                     targetBalance = targetBalance,
+                    currency = state.currency,
                     onDismiss = { screenModel.onIntent(HomeIntent.DismissTransfer) },
                     onConfirmTransfer = { amount, note ->
                         screenModel.onIntent(
@@ -156,6 +157,7 @@ class HomeScreen : Screen {
             // Create Account Bottom Sheet
             if (state.isAddAccountSheetOpen) {
                 AddAccountBottomSheet(
+                    currency = state.currency,
                     onDismiss = { screenModel.onIntent(HomeIntent.DismissAddAccount) },
                     onCreateAccount = { name, emoji, balance, desc ->
                         screenModel.onIntent(
@@ -186,6 +188,7 @@ class HomeScreen : Screen {
         onInitiateTransfer: (com.monetracka.shared.domain.model.Account, com.monetracka.shared.domain.model.Account) -> Unit,
         onAddAccount: () -> Unit
     ) {
+        val accountMap = remember(state.accounts) { state.accounts.associate { it.account.id to it.account } }
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -376,7 +379,6 @@ class HomeScreen : Screen {
                     key = { it.id }
                 ) { tx ->
                     val cat = state.categories[tx.categoryId]
-                    val accountMap = remember(state.accounts) { state.accounts.associate { it.account.id to it.account } }
                     TransactionRow(
                         tx = tx,
                         category = cat,

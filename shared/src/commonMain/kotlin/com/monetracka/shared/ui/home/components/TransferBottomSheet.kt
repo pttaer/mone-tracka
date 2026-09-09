@@ -30,6 +30,8 @@ import com.monetracka.shared.domain.util.CurrencyFormatter
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+private val DECIMAL_REGEX = Regex("""^\d*\.?\d{0,2}$""")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransferBottomSheet(
@@ -37,6 +39,7 @@ fun TransferBottomSheet(
     targetAccount: Account,
     sourceBalance: Double,
     targetBalance: Double,
+    currency: String = "USD",
     onDismiss: () -> Unit,
     onConfirmTransfer: (Double, String) -> Unit,
     modifier: Modifier = Modifier
@@ -123,7 +126,7 @@ fun TransferBottomSheet(
                         )
                     }
                     Text(
-                        text = CurrencyFormatter.format(sourceBalance),
+                        text = CurrencyFormatter.format(sourceBalance, currency),
                         color = Color(0xFF00D09C),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -152,7 +155,7 @@ fun TransferBottomSheet(
                         Text(text = targetAccount.emoji, fontSize = 18.sp)
                     }
                     Text(
-                        text = CurrencyFormatter.format(targetBalance),
+                        text = CurrencyFormatter.format(targetBalance, currency),
                         color = Color(0xFF00D09C),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -167,12 +170,12 @@ fun TransferBottomSheet(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { input ->
-                        if (input.isEmpty() || input.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
+                        if (input.isEmpty() || input.matches(DECIMAL_REGEX)) {
                             amountText = input
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    prefix = { Text(text = "$", color = Color(0xFF00D09C), fontSize = 24.sp, fontWeight = FontWeight.Bold) },
+                    prefix = { Text(text = CurrencyFormatter.symbol(currency), color = Color(0xFF00D09C), fontSize = 24.sp, fontWeight = FontWeight.Bold) },
                     textStyle = androidx.compose.ui.text.TextStyle(
                         color = Color.White,
                         fontSize = 24.sp,
@@ -252,13 +255,13 @@ fun TransferBottomSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${sourceAccount.name}: ${CurrencyFormatter.format(projectedSource)}",
+                        text = "${sourceAccount.name}: ${CurrencyFormatter.format(projectedSource, currency)}",
                         color = if (isOverdraft) Color(0xFFFFB300) else Color(0xFF8FA2B6),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "-${CurrencyFormatter.format(transferAmount)}",
+                        text = "-${CurrencyFormatter.format(transferAmount, currency)}",
                         color = Color(0xFFFF5A79),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -269,13 +272,13 @@ fun TransferBottomSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${targetAccount.name}: ${CurrencyFormatter.format(projectedTarget)}",
+                        text = "${targetAccount.name}: ${CurrencyFormatter.format(projectedTarget, currency)}",
                         color = Color(0xFF8FA2B6),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "+${CurrencyFormatter.format(transferAmount)}",
+                        text = "+${CurrencyFormatter.format(transferAmount, currency)}",
                         color = Color(0xFF00D09C),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
