@@ -2,6 +2,7 @@ package com.monetracka.shared.ui.theme
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // Brand Colors
@@ -67,4 +68,28 @@ val CategoryColorHexes = listOf(
 
 // Category colors for charts/icons derived from single source of truth
 val CategoryColors = CategoryColorHexes.map { Color(it) }
+
+object MoneTrackaColors {
+    val BackgroundOled = Color(0xFF060B11)
+    val SurfaceLevel1 = Color(0xFF0D1824)
+    val SurfaceLevel2 = Color(0xFF132232)
+    val SurfaceElevated = Color(0xFF17283C)
+    val SurfaceGlass = Color(0xCC0D1824)
+    val BorderGlass = Color.White.copy(alpha = 0.08f)
+    val BorderGlassLuminous = Color.White.copy(alpha = 0.14f)
+
+    val MintPrimary = Color(0xFF00D09C)
+    val MintDark = Color(0xFF00A87E)
+    val CyanAccent = Color(0xFF00B2FF)
+    val CoralDanger = Color(0xFFFF5A79)
+    val AmberWarning = Color(0xFFFFB300)
+    val VioletInsight = Color(0xFF9D65FF)
+
+    val TextPrimary = Color(0xFFFFFFFF)
+    val TextSecondary = Color(0xFF8FA2B6)
+    val TextMuted = Color(0xFF54687F)
+
+    val MintGradient = Brush.linearGradient(listOf(MintPrimary, MintDark))
+    val HeroCardBrush = Brush.linearGradient(listOf(Color(0xFF182A3E), Color(0xFF111E2D), Color(0xFF0A141E)))
+}
 
