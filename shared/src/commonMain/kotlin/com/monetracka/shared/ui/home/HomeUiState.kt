@@ -49,7 +49,9 @@ sealed interface HomeIntent {
         val type: TransactionType,
         val categoryId: Long,
         val note: String,
-        val accountId: Long = 1L
+        val accountId: Long = 1L,
+        val isRecurring: Boolean = false,
+        val recurringInterval: com.monetracka.shared.domain.model.RecurringInterval = com.monetracka.shared.domain.model.RecurringInterval.MONTHLY
     ) : HomeIntent
     data class DeleteTransaction(val id: Long) : HomeIntent
     data class InitiateTransfer(val fromAccount: Account, val toAccount: Account) : HomeIntent
@@ -60,7 +62,9 @@ sealed interface HomeIntent {
     data class CreateAccount(val name: String, val emoji: String, val initialBalance: Double, val description: String = "") : HomeIntent
     data class DeleteAccount(val id: Long) : HomeIntent
     data class UpdateMonthlyBudget(val newLimit: Double) : HomeIntent
+    data class UpdateCurrency(val newCurrency: String) : HomeIntent
     data object OpenAdjustBudget : HomeIntent
     data object DismissAdjustBudget : HomeIntent
 }
+
 

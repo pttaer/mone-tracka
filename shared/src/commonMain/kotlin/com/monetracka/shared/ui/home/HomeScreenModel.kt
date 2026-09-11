@@ -22,6 +22,9 @@ class HomeScreenModel(
     private val userProfileRepository: UserProfileRepository? = null,
     private val quoteRepository: com.monetracka.shared.domain.quote.QuoteRepository = com.monetracka.shared.domain.quote.QuoteRepositoryImpl(),
     private val coachEngine: com.monetracka.shared.domain.coach.SmartSavingCoachEngine = com.monetracka.shared.domain.coach.SmartSavingCoachEngine(),
+    private val exchangeRateRepository: com.monetracka.shared.domain.repository.ExchangeRateRepository? = null,
+    private val categoryBudgetRepository: com.monetracka.shared.domain.repository.CategoryBudgetRepository? = null,
+    private val recurringTransactionRepository: com.monetracka.shared.domain.repository.RecurringTransactionRepository? = null,
 ) : StateScreenModel<HomeUiState>(HomeUiState(isLoading = true)) {
 
     private var currentQuote = quoteRepository.getDailyQuote()
@@ -30,13 +33,20 @@ class HomeScreenModel(
         screenModelScope.launch {
             categoryRepository.insertDefaultCategories()
             accountRepository.insertDefaultAccounts()
+            exchangeRateRepository?.insertDefaultExchangeRates()
+            val now = Clock.System.now().toEpochMilliseconds()
+            recurringTransactionRepository?.processDueRecurring(now)
+
             combine(
                 transactionRepository.getAllTransactions(),
                 categoryRepository.getAllCategories(),
                 accountRepository.getAllAccounts(),
-                userProfileRepository?.getUserProfile() ?: flowOf(null)
-            ) { transactions, categories, accounts, userProfile ->
+                userProfileRepository?.getUserProfile() ?: flowOf(null),
+                categoryBudgetRepository?.getAllCategoryBudgets() ?: flowOf(emptyList())
+            ) { transactions, categories, accounts, userProfile, categoryBudgets ->
                 val categoryMap = categories.associateBy { it.id }
+                val budgetMap = categoryBudgets.associateBy { it.categoryId }
+
 
                 var totalIncome = 0.0
                 var totalExpense = 0.0
@@ -84,14 +94,17 @@ class HomeScreenModel(
                     val catName = cat?.name ?: "Other"
                     val colorIdx = cat?.colorIndex ?: 0
                     val hex = com.monetracka.shared.ui.theme.CategoryColorHexes.getOrElse(colorIdx) { 0xFF00D09CL }
+                    val limit = budgetMap[catId]?.monthlyLimit
                     CategorySpend(
                         category = catName,
                         amount = amount,
                         totalSpend = totalExpense,
                         colorIndex = colorIdx,
-                        colorHex = hex
+                        colorHex = hex,
+                        budgetLimit = limit
                     )
                 }.sortedByDescending { it.amount }
+
 
                 val sortedByDateDesc = transactions.sortedByDescending { it.dateMillis }
                 val sparkline = if (transactions.isNotEmpty()) {
@@ -166,6 +179,27 @@ class HomeScreenModel(
                         note = intent.note
                     )
                     transactionRepository.insertTransaction(newTx)
+                    if (intent.isRecurring && recurringTransactionRepository != null) {
+                        val nextDue = when (intent.recurringInterval) {
+                            com.monetracka.shared.domain.model.RecurringInterval.DAILY -> now + 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.WEEKLY -> now + 7 * 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.MONTHLY -> now + 30 * 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.YEARLY -> now + 365 * 86_400_000L
+                        }
+                        recurringTransactionRepository.insertRecurring(
+                            com.monetracka.shared.domain.model.RecurringTransaction(
+                                title = intent.note.ifBlank { "Recurring Transaction" },
+                                amount = intent.amount,
+                                type = intent.type,
+                                categoryId = intent.categoryId,
+                                accountId = intent.accountId,
+                                intervalType = intent.recurringInterval,
+                                intervalCount = 1,
+                                nextDueDateMillis = nextDue,
+                                autoPost = true
+                            )
+                        )
+                    }
                     mutableState.value = mutableState.value.copy(isAddSheetOpen = false)
                 }
             }
@@ -249,7 +283,16 @@ class HomeScreenModel(
                     )
                 }
             }
+            is HomeIntent.UpdateCurrency -> {
+                screenModelScope.launch {
+                    userProfileRepository?.updateCurrency(intent.newCurrency)
+                    mutableState.value = mutableState.value.copy(
+                        currency = intent.newCurrency
+                    )
+                }
+            }
         }
     }
 }
+
 

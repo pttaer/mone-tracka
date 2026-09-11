@@ -37,6 +37,38 @@ CREATE TABLE IF NOT EXISTS TransactionEntity (
     FOREIGN KEY (accountId) REFERENCES AccountEntity(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS ExchangeRateEntity (
+    fromCurrency TEXT NOT NULL,
+    toCurrency TEXT NOT NULL,
+    rate REAL NOT NULL,
+    updatedAtMillis INTEGER NOT NULL,
+    PRIMARY KEY (fromCurrency, toCurrency)
+);
+
+CREATE TABLE IF NOT EXISTS CategoryBudgetEntity (
+    categoryId INTEGER PRIMARY KEY,
+    monthlyLimit REAL NOT NULL,
+    rolloverEnabled INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (categoryId) REFERENCES CategoryEntity(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS RecurringTransactionEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    categoryId INTEGER NOT NULL,
+    accountId INTEGER NOT NULL DEFAULT 1,
+    intervalType TEXT NOT NULL,
+    intervalCount INTEGER NOT NULL DEFAULT 1,
+    nextDueDateMillis INTEGER NOT NULL,
+    autoPost INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (categoryId) REFERENCES CategoryEntity(id) ON DELETE CASCADE,
+    FOREIGN KEY (accountId) REFERENCES AccountEntity(id) ON DELETE CASCADE
+);
+
+
+
 CREATE INDEX idx_transaction_date ON TransactionEntity(dateMillis);
 CREATE INDEX idx_transaction_category ON TransactionEntity(categoryId);
 CREATE INDEX idx_transaction_account ON TransactionEntity(accountId);
@@ -77,6 +109,12 @@ SELECT last_insert_rowid();
 getAllTransactions:
 SELECT * FROM TransactionEntity ORDER BY dateMillis DESC;
 
+searchTransactions:
+SELECT * FROM TransactionEntity
+WHERE note LIKE ('%' || :query || '%')
+ORDER BY dateMillis DESC;
+
+
 insertTransaction:
 INSERT INTO TransactionEntity(amount, type, categoryId, accountId, toAccountId, note, dateMillis, createdAtMillis)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
@@ -98,7 +136,57 @@ VALUES (1, ?, ?, ?, ?);
 updateMonthlyBudget:
 UPDATE UserProfileEntity SET monthlyBudgetLimit = ? WHERE id = 1;
 
+updateCurrency:
+UPDATE UserProfileEntity SET currency = ? WHERE id = 1;
+
 getUserProfileCount:
 SELECT COUNT(*) FROM UserProfileEntity;
+
+
+-- Exchange Rate Queries
+getExchangeRate:
+SELECT * FROM ExchangeRateEntity WHERE fromCurrency = ? AND toCurrency = ? LIMIT 1;
+
+getAllExchangeRates:
+SELECT * FROM ExchangeRateEntity;
+
+insertOrUpdateExchangeRate:
+INSERT OR REPLACE INTO ExchangeRateEntity(fromCurrency, toCurrency, rate, updatedAtMillis)
+VALUES (?, ?, ?, ?);
+
+getExchangeRateCount:
+SELECT COUNT(*) FROM ExchangeRateEntity;
+
+-- Category Budget Queries
+getAllCategoryBudgets:
+SELECT * FROM CategoryBudgetEntity;
+
+getCategoryBudget:
+SELECT * FROM CategoryBudgetEntity WHERE categoryId = ? LIMIT 1;
+
+insertOrUpdateCategoryBudget:
+INSERT OR REPLACE INTO CategoryBudgetEntity(categoryId, monthlyLimit, rolloverEnabled)
+VALUES (?, ?, ?);
+
+deleteCategoryBudget:
+DELETE FROM CategoryBudgetEntity WHERE categoryId = ?;
+
+-- Recurring Transaction Queries
+getAllRecurringTransactions:
+SELECT * FROM RecurringTransactionEntity ORDER BY nextDueDateMillis ASC;
+
+getDueRecurringTransactions:
+SELECT * FROM RecurringTransactionEntity WHERE nextDueDateMillis <= :currentMillis AND autoPost = 1;
+
+insertRecurringTransaction:
+INSERT INTO RecurringTransactionEntity(title, amount, type, categoryId, accountId, intervalType, intervalCount, nextDueDateMillis, autoPost)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateRecurringNextDueDate:
+UPDATE RecurringTransactionEntity SET nextDueDateMillis = ? WHERE id = ?;
+
+deleteRecurringTransaction:
+DELETE FROM RecurringTransactionEntity WHERE id = ?;
+
 
 

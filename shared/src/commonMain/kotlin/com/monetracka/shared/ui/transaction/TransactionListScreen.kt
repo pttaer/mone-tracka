@@ -22,7 +22,7 @@ import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.monetracka.shared.domain.model.TransactionType
-import com.monetracka.shared.ui.home.components.TransactionFeed
+import com.monetracka.shared.ui.home.components.TransactionRow
 
 class TransactionListScreen : Screen {
 
@@ -34,10 +34,14 @@ class TransactionListScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
 
         var filterType by remember { mutableStateOf<TransactionType?>(null) }
+        var searchQuery by remember { mutableStateOf("") }
 
-        val filteredTransactions = remember(state.transactions, filterType) {
-            if (filterType == null) state.transactions
-            else state.transactions.filter { it.type == filterType }
+        val filteredTransactions = remember(state.transactions, filterType, searchQuery) {
+            state.transactions.filter { tx ->
+                val matchesType = filterType == null || tx.type == filterType
+                val matchesQuery = searchQuery.isBlank() || tx.note.contains(searchQuery, ignoreCase = true)
+                matchesType && matchesQuery
+            }
         }
 
         Scaffold(
@@ -71,6 +75,26 @@ class TransactionListScreen : Screen {
                     .padding(paddingValues)
                     .padding(horizontal = 18.dp)
             ) {
+                // Search Input Field
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search transactions...", color = Color(0xFF8FA2B6), fontSize = 13.sp) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFF00D09C),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
+                        focusedContainerColor = Color(0xFF132232),
+                        unfocusedContainerColor = Color(0xFF132232)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+
                 // Filter Tabs: All, Expense, Income
                 Row(
                     modifier = Modifier
@@ -126,10 +150,10 @@ class TransactionListScreen : Screen {
                         contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        item {
-                            TransactionFeed(
-                                transactions = filteredTransactions,
-                                categories = state.categories,
+                        items(filteredTransactions, key = { it.id }) { tx ->
+                            TransactionRow(
+                                tx = tx,
+                                category = state.categories[tx.categoryId],
                                 onDelete = { screenModel.deleteTransaction(it) }
                             )
                         }

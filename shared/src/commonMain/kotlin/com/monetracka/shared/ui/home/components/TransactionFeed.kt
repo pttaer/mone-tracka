@@ -21,23 +21,6 @@ import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.domain.util.CurrencyFormatter
 
 @Composable
-fun TransactionFeed(
-    transactions: List<Transaction>,
-    categories: Map<Long, Category> = emptyMap(),
-    accounts: Map<Long, Account> = emptyMap(),
-    currency: String = "USD",
-    onDelete: ((Long) -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        transactions.forEach { tx ->
-            val cat = categories[tx.categoryId]
-            TransactionRow(tx = tx, category = cat, accounts = accounts, currency = currency, onDelete = onDelete)
-        }
-    }
-}
-
-@Composable
 fun TransactionRow(
     tx: Transaction,
     category: Category?,

@@ -22,6 +22,7 @@ import kotlin.test.assertEquals
 
 class FakeTransactionRepository(private val txs: List<Transaction>) : TransactionRepository {
     override fun getAllTransactions(): Flow<List<Transaction>> = flowOf(txs)
+    override fun searchTransactions(query: String): Flow<List<Transaction>> = flowOf(txs.filter { it.note.contains(query, ignoreCase = true) })
     override suspend fun insertTransaction(transaction: Transaction): Long = 1L
     override suspend fun deleteTransaction(id: Long) {}
 }
@@ -48,8 +49,12 @@ class FakeUserProfileRepository(profile: com.monetracka.shared.domain.model.User
     override suspend fun updateMonthlyBudget(limit: Double) {
         profileFlow.value = profileFlow.value?.copy(monthlyBudgetLimit = limit)
     }
+    override suspend fun updateCurrency(currency: String) {
+        profileFlow.value = profileFlow.value?.copy(currency = currency)
+    }
     override suspend fun hasCompletedOnboarding(): Boolean = profileFlow.value?.hasCompletedOnboarding ?: false
 }
+
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeScreenModelTest {

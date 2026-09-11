@@ -29,8 +29,12 @@ class OnboardingFakeUserProfileRepo : UserProfileRepository {
     override suspend fun updateMonthlyBudget(limit: Double) {
         savedProfile = savedProfile?.copy(monthlyBudgetLimit = limit)
     }
+    override suspend fun updateCurrency(currency: String) {
+        savedProfile = savedProfile?.copy(currency = currency)
+    }
     override suspend fun hasCompletedOnboarding(): Boolean = savedProfile?.hasCompletedOnboarding ?: false
 }
+
 
 class OnboardingFakeAccountRepo : AccountRepository {
     val insertedAccounts = mutableListOf<Account>()

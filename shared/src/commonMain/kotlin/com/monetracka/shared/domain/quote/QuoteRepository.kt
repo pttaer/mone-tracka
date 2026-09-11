@@ -4,6 +4,26 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+enum class QuoteCategory {
+    SAVING,
+    DISCIPLINE,
+    INVESTING,
+    MINDSET
+}
+
+data class FinancialQuote(
+    val id: String,
+    val quote: String,
+    val author: String,
+    val category: QuoteCategory
+)
+
+interface QuoteRepository {
+    val allQuotes: List<FinancialQuote>
+    fun getDailyQuote(): FinancialQuote
+    fun getRandomQuote(excludeId: String? = null): FinancialQuote
+}
+
 class QuoteRepositoryImpl : QuoteRepository {
     override val allQuotes = listOf(
         FinancialQuote("1", "Do not save what is left after spending, but spend what is left after saving.", "Warren Buffett", QuoteCategory.SAVING),

@@ -55,6 +55,7 @@ class AccountBalanceCalculationTest {
 
         val fakeTxRepo = object : TransactionRepository {
             override fun getAllTransactions(): Flow<List<Transaction>> = flowOf(txs)
+            override fun searchTransactions(query: String): Flow<List<Transaction>> = flowOf(txs.filter { it.note.contains(query, ignoreCase = true) })
             override suspend fun insertTransaction(transaction: Transaction): Long = 1L
             override suspend fun deleteTransaction(id: Long) {}
         }

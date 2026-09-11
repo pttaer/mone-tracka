@@ -18,19 +18,16 @@ data class OnboardingUiState(
     val isLoading: Boolean = false
 ) {
     val userInitials: String
-        get() = userName.trim().split("\\s+".toRegex())
-            .filter { it.isNotBlank() }
-            .take(2)
-            .map { it.first().uppercase() }
-            .joinToString("")
-            .ifEmpty { "U" }
+        get() = UserProfile(userName = userName).initials
 }
 
 class OnboardingScreenModel(
     private val userProfileRepository: UserProfileRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val exchangeRateRepository: com.monetracka.shared.domain.repository.ExchangeRateRepository? = null
 ) : StateScreenModel<OnboardingUiState>(OnboardingUiState()) {
+
 
     fun onNameChanged(name: String) {
         mutableState.value = mutableState.value.copy(userName = name)
@@ -72,7 +69,9 @@ class OnboardingScreenModel(
             val currency = mutableState.value.selectedCurrency
 
             categoryRepository.insertDefaultCategories()
+            exchangeRateRepository?.insertDefaultExchangeRates()
             accountRepository.insertAccount(
+
                 Account(name = "Main Checking", emoji = "🏦", initialBalance = checking, description = "Daily operational account")
             )
             accountRepository.insertAccount(

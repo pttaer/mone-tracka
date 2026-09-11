@@ -5,6 +5,19 @@ import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.domain.util.CurrencyFormatter
 
+enum class InsightSeverity {
+    WARNING,
+    CELEBRATION,
+    INFO
+}
+
+data class CoachInsight(
+    val title: String,
+    val description: String,
+    val severity: InsightSeverity,
+    val actionSuggestion: String? = null
+)
+
 class SmartSavingCoachEngine {
 
     /**

@@ -28,7 +28,7 @@ fun AddTransactionBottomSheet(
     categories: List<Category>,
     initialType: TransactionType = TransactionType.EXPENSE,
     onDismiss: () -> Unit,
-    onSave: (Double, TransactionType, Long, String) -> Unit
+    onSave: (Double, TransactionType, Long, String, Boolean, com.monetracka.shared.domain.model.RecurringInterval) -> Unit
 ) {
     if (!isOpen) return
 
@@ -44,6 +44,9 @@ fun AddTransactionBottomSheet(
     var selectedCategoryId by remember(filteredCategories) {
         mutableStateOf(filteredCategories.firstOrNull()?.id ?: 1L)
     }
+
+    var isRecurring by remember { mutableStateOf(false) }
+    var selectedInterval by remember { mutableStateOf(com.monetracka.shared.domain.model.RecurringInterval.MONTHLY) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -198,6 +201,69 @@ fun AddTransactionBottomSheet(
                 }
             }
 
+            Spacer(Modifier.height(14.dp))
+
+            // Recurring subscription toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF172535))
+                    .clickable { isRecurring = !isRecurring }
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Recurring / Subscription", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Auto-repeat transaction on interval", fontSize = 11.sp, color = Color(0xFF8B9BAE))
+                }
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isRecurring) Color(0xFF00D09C) else Color(0xFF26374A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isRecurring) {
+                        Text("✓", fontSize = 12.sp, color = Color(0xFF060B11), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            if (isRecurring) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.monetracka.shared.domain.model.RecurringInterval.values().forEach { interval ->
+                        val isIntervalSel = selectedInterval == interval
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isIntervalSel) Color(0xFF00D09C).copy(alpha = 0.2f) else Color(0xFF172535))
+                                .border(
+                                    width = if (isIntervalSel) 1.dp else 0.dp,
+                                    color = if (isIntervalSel) Color(0xFF00D09C) else Color.Transparent,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .clickable { selectedInterval = interval }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = interval.name.lowercase().replaceFirstChar { it.uppercase() },
+                                fontSize = 11.sp,
+                                color = if (isIntervalSel) Color(0xFF00D09C) else Color(0xFF8B9BAE),
+                                fontWeight = if (isIntervalSel) FontWeight.Bold else FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+
             if (errorMessage != null) {
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -222,7 +288,7 @@ fun AddTransactionBottomSheet(
                         return@Button
                     }
                     val sanitizedNote = noteStr.trim().take(255)
-                    onSave(amt, selectedType, selectedCategoryId, sanitizedNote)
+                    onSave(amt, selectedType, selectedCategoryId, sanitizedNote, isRecurring, selectedInterval)
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D09C)),

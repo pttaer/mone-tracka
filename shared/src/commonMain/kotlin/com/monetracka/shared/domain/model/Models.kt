@@ -49,6 +49,58 @@ data class UserProfile(
             .joinToString("")
             .ifEmpty { "U" }
 }
+data class ExchangeRate(
+    val fromCurrency: String,
+    val toCurrency: String,
+    val rate: Double,
+    val updatedAtMillis: Long = 0L
+) {
+    fun convert(amount: Double): Double = amount * rate
+}
+
+fun Double.convertCurrency(fromRate: Double, toRate: Double): Double {
+    if (fromRate <= 0.0) return this
+    return this * (toRate / fromRate)
+}
+
+data class CategoryBudget(
+    val categoryId: Long,
+    val monthlyLimit: Double,
+    val rolloverEnabled: Boolean = false
+)
+
+data class CategorySpend(
+    val category: String,
+    val amount: Double,
+    val totalSpend: Double,
+    val colorIndex: Int = 0,
+    val colorHex: Long = 0xFF00D09CL,
+    val budgetLimit: Double? = null
+) {
+    val percentage: Double
+        get() = if (totalSpend > 0.0) (amount / totalSpend) * 100.0 else 0.0
+}
+
+enum class RecurringInterval {
+    DAILY,
+    WEEKLY,
+    MONTHLY,
+    YEARLY
+}
+
+data class RecurringTransaction(
+    val id: Long = 0L,
+    val title: String,
+    val amount: Double,
+    val type: TransactionType,
+    val categoryId: Long,
+    val accountId: Long = 1L,
+    val intervalType: RecurringInterval = RecurringInterval.MONTHLY,
+    val intervalCount: Int = 1,
+    val nextDueDateMillis: Long,
+    val autoPost: Boolean = true
+)
+
 
 
 

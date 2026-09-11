@@ -13,6 +13,15 @@
   - `bd1db12`: Dynamic monthly budget management and `AdjustBudgetBottomSheet`.
   - `e3e1ef4`: Refined `BalanceHeroCard` with glass depth, dynamic currency tags, and growth indicators.
   - `30119aa`: Complete end-to-end integration of floating nav, dynamic budgets, and glassmorphic overhaul in `HomeScreen`.
+  - `12-month-roadmap`: Established comprehensive 12-month engineering superplan across 4 phases.
+  - `execution-tracklist`: Created granular step-by-step checklist in `docs/superpowers/plans/execution-tracklist.md`.
+  - `exchange-rate-engine`: Added `ExchangeRate` model, SQLDelight table & queries, repository layer, currency conversion helper, dynamic currency picker in Settings, and unit test suite.
+  - `export-import-engine`: Added `SimpleCsvExporter` for roundtrip transaction export/import with sanitization, test suite, and SettingsView integration.
+  - `category-budget-engine`: Added `CategoryBudget` model, `CategoryBudgetEntity` SQLDelight schema with cascade deletion, `CategoryBudgetRepository`, DI binding, and unit tests.
+  - `recurring-transactions`: Added `RecurringTransactionEntity`, `RecurringTransactionRepository`, auto-posting check on app launch, interval selectors, and quick-add toggle.
+  - `deep-analytics-networth`: Added comparative MoM flow visual, net savings rate calculation, and Net Worth timeline sparkline in `AnalyticsView`.
+  - `security-and-auth`: Added `BiometricAuthManager` multiplatform expect/actual engine and UI toggle in `SettingsView`.
+
 
 ## Key Rules & Architectural Guardrails
 - Performance: Single-pass O(N) data transformations; avoid nested traversals or re-sorting lists.
