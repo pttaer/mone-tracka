@@ -1,7 +1,6 @@
 package com.monetracka.shared.ui.home.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -9,12 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.model.CategorySpend
 import com.monetracka.shared.domain.util.CurrencyFormatter
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 @Composable
 fun CategoryInsightsCard(
@@ -25,9 +26,9 @@ fun CategoryInsightsCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(Color(0xFF172535))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(22.dp))
+            .shadow(4.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MoneTrackaColors.CardWhite)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -55,13 +56,13 @@ fun CategoryInsightsCard(
                                     .clip(RoundedCornerShape(999.dp))
                                     .background(catColor)
                             )
-                            Text(text = cat.category, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFD1DBE6))
+                            Text(text = cat.category, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MoneTrackaColors.TextDark)
                         }
                         Text(
                             text = "${CurrencyFormatter.format(cat.amount, currency)} (${cat.percentage.toInt()}%)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = MoneTrackaColors.TextDark
                         )
                     }
                     Box(
@@ -69,7 +70,7 @@ fun CategoryInsightsCard(
                             .fillMaxWidth()
                             .height(5.dp)
                             .clip(RoundedCornerShape(999.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
+                            .background(MoneTrackaColors.ProgressTrack)
                     ) {
                         Box(
                             modifier = Modifier

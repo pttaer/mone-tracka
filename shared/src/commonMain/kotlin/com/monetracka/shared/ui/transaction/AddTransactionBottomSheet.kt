@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.TransactionType
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +51,7 @@ fun AddTransactionBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF0C1622),
+        containerColor = MoneTrackaColors.CardWhite,
         dragHandle = {
             Box(
                 Modifier
@@ -58,7 +59,7 @@ fun AddTransactionBottomSheet(
                     .width(48.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(9999.dp))
-                    .background(Color.White.copy(alpha = 0.2f))
+                    .background(MoneTrackaColors.ProgressTrack)
             )
         }
     ) {
@@ -70,7 +71,7 @@ fun AddTransactionBottomSheet(
         ) {
             Text(
                 text = "Log Transaction",
-                color = Color.White,
+                color = MoneTrackaColors.TextDark,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -82,7 +83,7 @@ fun AddTransactionBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF172535))
+                    .background(MoneTrackaColors.SurfaceSecondary)
                     .padding(4.dp)
             ) {
                 listOf(TransactionType.EXPENSE to "Expense", TransactionType.INCOME to "Income").forEach { (type, label) ->
@@ -94,7 +95,7 @@ fun AddTransactionBottomSheet(
                             .clip(RoundedCornerShape(10.dp))
                             .background(
                                 if (isSelected) {
-                                    if (type == TransactionType.EXPENSE) Color(0xFFFF5A79) else Color(0xFF00D09C)
+                                    if (type == TransactionType.EXPENSE) MoneTrackaColors.CoralDanger else MoneTrackaColors.MintPrimary
                                 } else Color.Transparent
                             )
                             .clickable {
@@ -105,7 +106,7 @@ fun AddTransactionBottomSheet(
                     ) {
                         Text(
                             text = label,
-                            color = if (isSelected) Color.White else Color(0xFF8FA2B6),
+                            color = if (isSelected) Color.White else MoneTrackaColors.TextGray,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
@@ -124,16 +125,16 @@ fun AddTransactionBottomSheet(
                         errorMessage = null
                     }
                 },
-                label = { Text("Amount ($)", color = Color(0xFF8FA2B6)) },
-                placeholder = { Text("0.00", color = Color(0xFF54687F)) },
+                label = { Text("Amount ($)", color = MoneTrackaColors.TextGray) },
+                placeholder = { Text("0.00", color = MoneTrackaColors.TextLight) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color(0xFF00D09C),
-                    unfocusedBorderColor = Color(0xFF243447)
+                    focusedTextColor = MoneTrackaColors.TextDark,
+                    unfocusedTextColor = MoneTrackaColors.TextDark,
+                    focusedBorderColor = MoneTrackaColors.MintPrimary,
+                    unfocusedBorderColor = MoneTrackaColors.ProgressTrack
                 )
             )
 
@@ -142,15 +143,15 @@ fun AddTransactionBottomSheet(
             OutlinedTextField(
                 value = noteStr,
                 onValueChange = { noteStr = it },
-                label = { Text("Note / Description", color = Color(0xFF8FA2B6)) },
-                placeholder = { Text("e.g. Lunch with team", color = Color(0xFF54687F)) },
+                label = { Text("Note / Description", color = MoneTrackaColors.TextGray) },
+                placeholder = { Text("e.g. Lunch with team", color = MoneTrackaColors.TextLight) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color(0xFF00D09C),
-                    unfocusedBorderColor = Color(0xFF243447)
+                    focusedTextColor = MoneTrackaColors.TextDark,
+                    unfocusedTextColor = MoneTrackaColors.TextDark,
+                    focusedBorderColor = MoneTrackaColors.MintPrimary,
+                    unfocusedBorderColor = MoneTrackaColors.ProgressTrack
                 )
             )
 
@@ -158,7 +159,7 @@ fun AddTransactionBottomSheet(
 
             Text(
                 text = "Category (${filteredCategories.size})",
-                color = Color(0xFF8FA2B6),
+                color = MoneTrackaColors.TextGray,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -173,10 +174,10 @@ fun AddTransactionBottomSheet(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSel) Color(0xFF00D09C).copy(alpha = 0.2f) else Color(0xFF172535))
+                            .background(if (isSel) MoneTrackaColors.MintLight else MoneTrackaColors.SurfaceSecondary)
                             .border(
                                 width = if (isSel) 1.5.dp else 0.dp,
-                                color = if (isSel) Color(0xFF00D09C) else Color.Transparent,
+                                color = if (isSel) MoneTrackaColors.MintPrimary else Color.Transparent,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clickable {
@@ -193,7 +194,7 @@ fun AddTransactionBottomSheet(
                             Text(
                                 text = cat.name,
                                 fontSize = 12.sp,
-                                color = if (isSel) Color(0xFF00D09C) else Color(0xFFD1DBE6),
+                                color = if (isSel) MoneTrackaColors.MintPrimary else MoneTrackaColors.TextDark,
                                 fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium
                             )
                         }
@@ -208,25 +209,25 @@ fun AddTransactionBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF172535))
+                    .background(MoneTrackaColors.SurfaceSecondary)
                     .clickable { isRecurring = !isRecurring }
                     .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Recurring / Subscription", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text("Auto-repeat transaction on interval", fontSize = 11.sp, color = Color(0xFF8B9BAE))
+                    Text("Recurring / Subscription", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MoneTrackaColors.TextDark)
+                    Text("Auto-repeat transaction on interval", fontSize = 11.sp, color = MoneTrackaColors.TextGray)
                 }
                 Box(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(if (isRecurring) Color(0xFF00D09C) else Color(0xFF26374A)),
+                        .background(if (isRecurring) MoneTrackaColors.MintPrimary else MoneTrackaColors.ProgressTrack),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isRecurring) {
-                        Text("✓", fontSize = 12.sp, color = Color(0xFF060B11), fontWeight = FontWeight.Bold)
+                        Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -243,10 +244,10 @@ fun AddTransactionBottomSheet(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isIntervalSel) Color(0xFF00D09C).copy(alpha = 0.2f) else Color(0xFF172535))
+                                .background(if (isIntervalSel) MoneTrackaColors.MintLight else MoneTrackaColors.SurfaceSecondary)
                                 .border(
                                     width = if (isIntervalSel) 1.dp else 0.dp,
-                                    color = if (isIntervalSel) Color(0xFF00D09C) else Color.Transparent,
+                                    color = if (isIntervalSel) MoneTrackaColors.MintPrimary else Color.Transparent,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .clickable { selectedInterval = interval }
@@ -256,7 +257,7 @@ fun AddTransactionBottomSheet(
                             Text(
                                 text = interval.name.lowercase().replaceFirstChar { it.uppercase() },
                                 fontSize = 11.sp,
-                                color = if (isIntervalSel) Color(0xFF00D09C) else Color(0xFF8B9BAE),
+                                color = if (isIntervalSel) MoneTrackaColors.MintPrimary else MoneTrackaColors.TextGray,
                                 fontWeight = if (isIntervalSel) FontWeight.Bold else FontWeight.Medium
                             )
                         }
@@ -268,7 +269,7 @@ fun AddTransactionBottomSheet(
                 Spacer(Modifier.height(10.dp))
                 Text(
                     text = errorMessage ?: "",
-                    color = Color(0xFFFF5A79),
+                    color = MoneTrackaColors.CoralDanger,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -291,10 +292,10 @@ fun AddTransactionBottomSheet(
                     onSave(amt, selectedType, selectedCategoryId, sanitizedNote, isRecurring, selectedInterval)
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D09C)),
+                colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Confirm Transaction", color = Color(0xFF022015), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Confirm Transaction", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
     }

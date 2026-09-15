@@ -37,7 +37,7 @@ fun AdjustBudgetBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MoneTrackaColors.SurfaceLevel1,
+        containerColor = MoneTrackaColors.CardWhite,
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -45,7 +45,7 @@ fun AdjustBudgetBottomSheet(
                     .width(44.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.2f))
+                    .background(MoneTrackaColors.ProgressTrack)
             )
         },
         modifier = modifier
@@ -66,23 +66,23 @@ fun AdjustBudgetBottomSheet(
                     text = "Monthly Budget Target",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MoneTrackaColors.TextDark
                 )
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.06f))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .clickable { onDismiss() }
                 ) {
-                    Text(text = "✕", color = Color(0xFF8FA2B6), fontSize = 14.sp)
+                    Text(text = "✕", color = MoneTrackaColors.TextGray, fontSize = 14.sp)
                 }
             }
 
             Text(
                 text = "Set your total planned outflow target. MoneTracka tracks your progress and warns you when approaching limits.",
-                color = Color(0xFF8FA2B6),
+                color = MoneTrackaColors.TextGray,
                 fontSize = 13.sp
             )
 
@@ -96,13 +96,13 @@ fun AdjustBudgetBottomSheet(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (parsedAmount == preset.toDouble()) MoneTrackaColors.MintPrimary else MoneTrackaColors.SurfaceLevel2)
+                            .background(if (parsedAmount == preset.toDouble()) MoneTrackaColors.MintPrimary else MoneTrackaColors.SurfaceSecondary)
                             .clickable { budgetText = preset.toString() }
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = "${CurrencyFormatter.symbol(currency)}$preset",
-                            color = if (parsedAmount == preset.toDouble()) Color(0xFF051A12) else Color.White,
+                            color = if (parsedAmount == preset.toDouble()) Color.White else MoneTrackaColors.TextDark,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -117,12 +117,12 @@ fun AdjustBudgetBottomSheet(
                 prefix = { Text(text = CurrencyFormatter.symbol(currency), color = MoneTrackaColors.MintPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                textStyle = androidx.compose.ui.text.TextStyle(color = MoneTrackaColors.TextDark, fontSize = 20.sp, fontWeight = FontWeight.Bold),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MoneTrackaColors.MintPrimary,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                    focusedContainerColor = MoneTrackaColors.SurfaceLevel2,
-                    unfocusedContainerColor = MoneTrackaColors.SurfaceLevel2
+                    unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                    focusedContainerColor = MoneTrackaColors.SurfaceSecondary,
+                    unfocusedContainerColor = MoneTrackaColors.SurfaceSecondary
                 ),
                 shape = RoundedCornerShape(14.dp)
             )
@@ -135,7 +135,7 @@ fun AdjustBudgetBottomSheet(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MoneTrackaColors.MintPrimary,
-                    contentColor = Color(0xFF051A12)
+                    contentColor = Color.White
                 )
             ) {
                 Text(

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.util.CurrencyFormatter
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 private val ACCOUNT_EMOJIS = listOf("🏦", "💵", "💳", "🪙", "🎯", "💼", "📈", "🏝️", "👛", "🛡️")
 private val DECIMAL_REGEX = Regex("""^\d*\.?\d{0,2}$""")
@@ -43,7 +44,7 @@ fun AddAccountBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF0C1622),
+        containerColor = MoneTrackaColors.CardWhite,
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -51,7 +52,7 @@ fun AddAccountBottomSheet(
                     .width(44.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.2f))
+                    .background(MoneTrackaColors.ProgressTrack)
             )
         },
         modifier = modifier
@@ -73,17 +74,17 @@ fun AddAccountBottomSheet(
                     text = "New Account",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MoneTrackaColors.TextDark
                 )
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.06f))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .clickable { onDismiss() }
                 ) {
-                    Text(text = "✕", color = Color(0xFF8FA2B6), fontSize = 14.sp)
+                    Text(text = "✕", color = MoneTrackaColors.TextGray, fontSize = 14.sp)
                 }
             }
 
@@ -91,7 +92,7 @@ fun AddAccountBottomSheet(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "CHOOSE ICON",
-                    color = Color(0xFF8FA2B6),
+                    color = MoneTrackaColors.TextGray,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
@@ -107,10 +108,10 @@ fun AddAccountBottomSheet(
                             modifier = Modifier
                                 .size(46.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) Color(0xFF00D09C).copy(alpha = 0.2f) else Color(0xFF131F2E))
+                                .background(if (isSelected) MoneTrackaColors.MintLight else MoneTrackaColors.SurfaceSecondary)
                                 .border(
                                     width = if (isSelected) 2.dp else 1.dp,
-                                    color = if (isSelected) Color(0xFF00D09C) else Color.White.copy(alpha = 0.08f),
+                                    color = if (isSelected) MoneTrackaColors.MintPrimary else MoneTrackaColors.ProgressTrack,
                                     shape = RoundedCornerShape(14.dp)
                                 )
                                 .clickable { selectedEmoji = emoji }
@@ -123,19 +124,19 @@ fun AddAccountBottomSheet(
 
             // Account Name
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "ACCOUNT NAME", color = Color(0xFF8FA2B6), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = "ACCOUNT NAME", color = MoneTrackaColors.TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 OutlinedTextField(
                     value = nameText,
                     onValueChange = { nameText = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g. Main Checking, Crypto, Emergency", color = Color(0xFF54687F), fontSize = 14.sp) },
+                    placeholder = { Text("e.g. Main Checking, Crypto, Emergency", color = MoneTrackaColors.TextLight, fontSize = 14.sp) },
                     singleLine = true,
-                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 15.sp),
+                    textStyle = androidx.compose.ui.text.TextStyle(color = MoneTrackaColors.TextDark, fontSize = 15.sp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF00D09C),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedContainerColor = Color(0xFF131F2E),
-                        unfocusedContainerColor = Color(0xFF131F2E)
+                        focusedBorderColor = MoneTrackaColors.MintPrimary,
+                        unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                        focusedContainerColor = MoneTrackaColors.SurfaceSecondary,
+                        unfocusedContainerColor = MoneTrackaColors.SurfaceSecondary
                     ),
                     shape = RoundedCornerShape(14.dp)
                 )
@@ -143,7 +144,7 @@ fun AddAccountBottomSheet(
 
             // Starting / Initial Balance
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "STARTING BALANCE", color = Color(0xFF8FA2B6), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = "STARTING BALANCE", color = MoneTrackaColors.TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 OutlinedTextField(
                     value = balanceText,
                     onValueChange = { input ->
@@ -152,16 +153,16 @@ fun AddAccountBottomSheet(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    prefix = { Text(text = CurrencyFormatter.symbol(currency), color = Color(0xFF00D09C), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
-                    placeholder = { Text("0.00", color = Color(0xFF54687F), fontSize = 15.sp) },
+                    prefix = { Text(text = CurrencyFormatter.symbol(currency), color = MoneTrackaColors.MintPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                    placeholder = { Text("0.00", color = MoneTrackaColors.TextLight, fontSize = 15.sp) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                    textStyle = androidx.compose.ui.text.TextStyle(color = MoneTrackaColors.TextDark, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF00D09C),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedContainerColor = Color(0xFF131F2E),
-                        unfocusedContainerColor = Color(0xFF131F2E)
+                        focusedBorderColor = MoneTrackaColors.MintPrimary,
+                        unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                        focusedContainerColor = MoneTrackaColors.SurfaceSecondary,
+                        unfocusedContainerColor = MoneTrackaColors.SurfaceSecondary
                     ),
                     shape = RoundedCornerShape(14.dp)
                 )
@@ -169,19 +170,19 @@ fun AddAccountBottomSheet(
 
             // Description / Note (optional)
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "DESCRIPTION (OPTIONAL)", color = Color(0xFF8FA2B6), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = "DESCRIPTION (OPTIONAL)", color = MoneTrackaColors.TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 OutlinedTextField(
                     value = descriptionText,
                     onValueChange = { descriptionText = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Short description or purpose", color = Color(0xFF54687F), fontSize = 13.sp) },
+                    placeholder = { Text("Short description or purpose", color = MoneTrackaColors.TextLight, fontSize = 13.sp) },
                     singleLine = true,
-                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 14.sp),
+                    textStyle = androidx.compose.ui.text.TextStyle(color = MoneTrackaColors.TextDark, fontSize = 14.sp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF00D09C),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.08f),
-                        focusedContainerColor = Color(0xFF131F2E),
-                        unfocusedContainerColor = Color(0xFF131F2E)
+                        focusedBorderColor = MoneTrackaColors.MintPrimary,
+                        unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                        focusedContainerColor = MoneTrackaColors.SurfaceSecondary,
+                        unfocusedContainerColor = MoneTrackaColors.SurfaceSecondary
                     ),
                     shape = RoundedCornerShape(14.dp)
                 )
@@ -199,10 +200,10 @@ fun AddAccountBottomSheet(
                     .height(52.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00D09C),
-                    disabledContainerColor = Color(0xFF172535),
-                    contentColor = Color(0xFF051A12),
-                    disabledContentColor = Color(0xFF54687F)
+                    containerColor = MoneTrackaColors.MintPrimary,
+                    disabledContainerColor = MoneTrackaColors.ProgressTrack,
+                    contentColor = Color.White,
+                    disabledContentColor = MoneTrackaColors.TextLight
                 )
             ) {
                 Text(

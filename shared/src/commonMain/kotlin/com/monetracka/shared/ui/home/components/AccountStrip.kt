@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -34,6 +33,7 @@ import androidx.compose.ui.zIndex
 import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.util.CurrencyFormatter
 import com.monetracka.shared.ui.home.AccountUiModel
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 import kotlin.math.roundToInt
 
 @Composable
@@ -62,21 +62,21 @@ fun AccountStrip(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "ACCOUNTS",
-                    color = Color(0xFF8FA2B6),
+                    color = MoneTrackaColors.TextGray,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
                 Text(
                     text = "• Drag card onto another to transfer",
-                    color = Color(0xFF00D09C).copy(alpha = 0.8f),
+                    color = MoneTrackaColors.MintPrimary.copy(alpha = 0.8f),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
             Text(
                 text = "${accounts.size} Active",
-                color = Color(0xFF54687F),
+                color = MoneTrackaColors.TextLight,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -119,7 +119,6 @@ fun AccountStrip(
                     onDrag = { amount ->
                         dragDelta += amount
                         touchRootPosition += amount
-                        // Find which other card contains touchRootPosition
                         val target = cardBounds.entries.firstOrNull { (id, bounds) ->
                             id != item.account.id && bounds.contains(touchRootPosition)
                         }
@@ -150,13 +149,9 @@ fun AccountStrip(
                     modifier = Modifier
                         .width(100.dp)
                         .height(118.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF101C2A))
-                        .border(
-                            width = 1.dp,
-                            color = Color.White.copy(alpha = 0.08f),
-                            shape = RoundedCornerShape(18.dp)
-                        )
+                        .shadow(2.dp, RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .clickable { onAddAccount() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -169,18 +164,18 @@ fun AccountStrip(
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.06f))
+                                .background(MoneTrackaColors.MintLight)
                         ) {
                             Text(
                                 text = "+",
-                                color = Color(0xFF00D09C),
+                                color = MoneTrackaColors.MintPrimary,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Text(
                             text = "Add Account",
-                            color = Color(0xFF8FA2B6),
+                            color = MoneTrackaColors.TextGray,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -208,11 +203,11 @@ private fun AccountCard(
     modifier: Modifier = Modifier
 ) {
     val borderColor = when {
-        isHoveredTarget -> Color(0xFF00D09C)
+        isHoveredTarget -> MoneTrackaColors.MintPrimary
         isDragging -> Color(0xFF38EF7D)
-        else -> Color.White.copy(alpha = 0.08f)
+        else -> Color.Transparent
     }
-    val borderWidth = if (isHoveredTarget || isDragging) 2.dp else 1.dp
+    val borderWidth = if (isHoveredTarget || isDragging) 2.dp else 0.dp
 
     Box(
         modifier = modifier
@@ -237,22 +232,19 @@ private fun AccountCard(
             .width(140.dp)
             .height(118.dp)
             .shadow(
-                elevation = if (isDragging) 16.dp else 0.dp,
-                shape = RoundedCornerShape(18.dp),
-                ambientColor = Color(0xFF00D09C),
-                spotColor = Color(0xFF00D09C)
+                elevation = if (isDragging) 16.dp else 4.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = if (isDragging) MoneTrackaColors.MintPrimary else MoneTrackaColors.CardShadowColor,
+                spotColor = if (isDragging) MoneTrackaColors.MintPrimary else MoneTrackaColors.CardShadowColor
             )
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(
-                Brush.verticalGradient(
-                    colors = if (isHoveredTarget) {
-                        listOf(Color(0xFF132A24), Color(0xFF0E1F1B))
-                    } else {
-                        listOf(Color(0xFF131F2E), Color(0xFF0C1622))
-                    }
-                )
+                if (isHoveredTarget) MoneTrackaColors.MintLight else MoneTrackaColors.CardWhite
             )
-            .border(borderWidth, borderColor, RoundedCornerShape(18.dp))
+            .then(
+                if (borderWidth > 0.dp) Modifier.border(borderWidth, borderColor, RoundedCornerShape(16.dp))
+                else Modifier
+            )
             .padding(12.dp)
     ) {
         Column(
@@ -269,7 +261,7 @@ private fun AccountCard(
                     modifier = Modifier
                         .size(34.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.White.copy(alpha = 0.06f))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                 ) {
                     Text(text = item.account.emoji, fontSize = 17.sp)
                 }
@@ -278,12 +270,12 @@ private fun AccountCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFF00D09C))
+                            .background(MoneTrackaColors.MintPrimary)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = "DROP HERE",
-                            color = Color(0xFF051A12),
+                            color = Color.White,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Black
                         )
@@ -294,14 +286,14 @@ private fun AccountCard(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = item.account.name,
-                    color = Color(0xFF8FA2B6),
+                    color = MoneTrackaColors.TextGray,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1
                 )
                 Text(
                     text = CurrencyFormatter.format(item.balance, currency),
-                    color = Color.White,
+                    color = MoneTrackaColors.TextDark,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1

@@ -7,12 +7,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,6 +26,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.ui.home.components.TransactionRow
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 class TransactionListScreen : Screen {
 
@@ -50,7 +54,7 @@ class TransactionListScreen : Screen {
                     title = {
                         Text(
                             "All Transactions",
-                            color = Color.White,
+                            color = MoneTrackaColors.TextDark,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
@@ -58,16 +62,16 @@ class TransactionListScreen : Screen {
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color.White
+                                tint = MoneTrackaColors.TextDark
                             )
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF060B11))
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MoneTrackaColors.CardWhite)
                 )
             },
-            containerColor = Color(0xFF060B11)
+            containerColor = MoneTrackaColors.BackgroundLight
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -75,33 +79,43 @@ class TransactionListScreen : Screen {
                     .padding(paddingValues)
                     .padding(horizontal = 18.dp)
             ) {
-                // Search Input Field
+                // Search Input Field with Clear Action
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search transactions...", color = Color(0xFF8FA2B6), fontSize = 13.sp) },
+                    placeholder = { Text("Search by note...", color = MoneTrackaColors.TextLight, fontSize = 14.sp) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "Search", tint = MoneTrackaColors.TextGray, modifier = Modifier.size(20.dp))
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear", tint = MoneTrackaColors.TextGray, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color(0xFF00D09C),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedContainerColor = Color(0xFF132232),
-                        unfocusedContainerColor = Color(0xFF132232)
+                        focusedTextColor = MoneTrackaColors.TextDark,
+                        unfocusedTextColor = MoneTrackaColors.TextDark,
+                        focusedBorderColor = MoneTrackaColors.MintPrimary,
+                        unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                        focusedContainerColor = MoneTrackaColors.CardWhite,
+                        unfocusedContainerColor = MoneTrackaColors.CardWhite
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                        .padding(top = 10.dp, bottom = 4.dp)
                 )
 
-                // Filter Tabs: All, Expense, Income
+                // Segmented Filter Tabs: All, Expense, Income
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 12.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF172535))
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -117,16 +131,21 @@ class TransactionListScreen : Screen {
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Color(0xFF00D09C) else Color.Transparent)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.shadow(2.dp, RoundedCornerShape(10.dp), spotColor = MoneTrackaColors.CardShadowColor)
+                                    } else Modifier
+                                )
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) MoneTrackaColors.CardWhite else Color.Transparent)
                                 .clickable { filterType = type }
-                                .padding(vertical = 8.dp)
+                                .padding(vertical = 10.dp)
                         ) {
                             Text(
                                 text = label,
-                                color = if (isSelected) Color(0xFF022015) else Color(0xFF8FA2B6),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                color = if (isSelected) MoneTrackaColors.MintDark else MoneTrackaColors.TextGray,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                fontSize = 13.sp
                             )
                         }
                     }
@@ -134,20 +153,23 @@ class TransactionListScreen : Screen {
 
                 if (state.isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFF00D09C))
+                        CircularProgressIndicator(color = MoneTrackaColors.MintPrimary)
                     }
                 } else if (filteredTransactions.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "No transactions found",
-                            color = Color(0xFF8FA2B6),
-                            fontSize = 14.sp
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = if (searchQuery.isNotBlank()) "No matching transactions found" else "No transactions recorded yet",
+                                color = MoneTrackaColors.TextGray,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp),
+                        contentPadding = PaddingValues(top = 4.dp, bottom = 40.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(filteredTransactions, key = { it.id }) { tx ->

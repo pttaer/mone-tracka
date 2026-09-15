@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoneTracka — UI & UX Interactive Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-app: #F5F7FA;
+      --card-white: #FFFFFF;
+      --surface-sec: #F0F2F5;
+      --progress-track: #E5E7EB;
+      --shadow-color: rgba(0, 0, 0, 0.06);
+      --shadow-hover: rgba(0, 0, 0, 0.12);
+      --mint-primary: #00D09C;
+      --mint-dark: #00A87E;
+      --mint-light: #E6FAF5;
+      --cyan-accent: #00B4D8;
+      --coral-danger: #FF5A79;
+      --coral-light: #FFF0F3;
+      --amber-warning: #FFB300;
+      --amber-light: #FFF8E6;
+      --text-dark: #1A1F36;
+      --text-gray: #6B7280;
+      --text-light: #9CA3AF;
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top left, #E2E8F0, #CBD5E1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text-dark);
+    }
+
+    /* Top Control Bar */
+    .top-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border-radius: 999px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid rgba(255,255,255,0.6);
+      z-index: 100;
+    }
+
+    .badge-app-title {
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--mint-dark);
+    }
+
+    .ctrl-btn {
+      background: var(--surface-sec);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-dark);
+      transition: all 0.2s;
+    }
+
+    .ctrl-btn:hover, .ctrl-btn.active {
+      background: var(--mint-dark);
+      color: white;
+    }
+
+    /* Mobile Phone Shell */
+    .device-wrapper {
+      width: 412px;
+      height: 860px;
+      background: #1E293B;
+      border-radius: 54px;
+      padding: 12px;
+      box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      position: relative;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .device-wrapper.expanded {
+      width: 520px;
+      height: 900px;
+      border-radius: 40px;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-app);
+      border-radius: 44px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dynamic Island & Status Bar */
+    .status-bar {
+      height: 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dark);
+      z-index: 20;
+    }
+
+    .dynamic-island {
+      width: 110px;
+      height: 26px;
+      background: #000;
+      border-radius: 999px;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* Scrollable App Viewport */
+    .app-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 18px 110px 18px;
+      scroll-behavior: smooth;
+    }
+
+    .app-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Common Card Styles */
+    .card {
+      background: var(--card-white);
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid var(--progress-track);
+      box-shadow: 0 4px 16px var(--shadow-color);
+      margin-bottom: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 22px var(--shadow-hover);
+    }
+
+    /* Top User Header */
+    .user-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 4px 2px;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-box {
+      width: 42px;
+      height: 42px;
+      background: var(--mint-primary);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      color: #051A12;
+      box-shadow: 0 4px 10px rgba(0, 208, 156, 0.25);
+    }
+
+    .user-title-wrap h4 {
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      color: var(--text-gray);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .user-title-wrap h2 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .bell-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--card-white);
+      border: 1px solid var(--progress-track);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 2px 8px var(--shadow-color);
+    }
+
+    .bell-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--mint-primary);
+      border-radius: 50%;
+      position: absolute;
+      top: 10px;
+      right: 11px;
+      border: 2px solid white;
+    }
+
+    /* Balance Hero Card */
+    .balance-card {
+      background: linear-gradient(135deg, #00D09C 0%, #00B4D8 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(0, 180, 216, 0.28);
+      margin-bottom: 18px;
+    }
+
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 50%;
+      right: -30px;
+      top: -40px;
+      pointer-events: none;
+    }
+
+    .balance-label {
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.88;
+      letter-spacing: 0.4px;
+    }
+
+    .balance-amount {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 4px 0 12px 0;
+      letter-spacing: -0.5px;
+    }
+
+    .trend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .sparkline-svg {
+      width: 100%;
+      height: 52px;
+      margin-top: 10px;
+    }
+
+    /* Account Carousel */
+    .accounts-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      margin-bottom: 18px;
+      padding-bottom: 4px;
+    }
+    .accounts-strip::-webkit-scrollbar { display: none; }
+
+    .account-chip {
+      background: var(--card-white);
+      border: 1px solid var(--progress-track);
+      border-radius: 18px;
+      padding: 14px;
+      min-width: 140px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px var(--shadow-color);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .account-chip:hover {
+      transform: translateY(-2px);
+    }
+    .account-chip .icon {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .account-chip .name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-gray);
+    }
+    .account-chip .amt {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-top: 2px;
+    }
+
+    /* Coach Card */
+    .coach-card {
+      background: var(--card-white);
+      border-left: 4px solid var(--mint-primary);
+    }
+    .coach-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--mint-dark);
+      background: var(--mint-light);
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    /* Quote Card */
+    .quote-card {
+      background: #F8FAFC;
+      border: 1px dashed #CBD5E1;
+      position: relative;
+    }
+    .quote-text {
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text-dark);
+      line-height: 1.45;
+    }
+    .quote-author {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-gray);
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .quote-refresh-btn {
+      background: none;
+      border: none;
+      color: var(--mint-dark);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .qa-btn {
+      background: var(--card-white);
+      border: 1px solid var(--progress-track);
+      border-radius: 16px;
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px var(--shadow-color);
+      transition: all 0.15s;
+    }
+    .qa-btn:hover {
+      background: var(--surface-sec);
+      transform: translateY(-2px);
+    }
+    .qa-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .qa-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    /* Section Title */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0 10px 0;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+    .section-link {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--mint-dark);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* Transaction Item */
+    .tx-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-white);
+      border: 1px solid var(--progress-track);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: transform 0.15s;
+    }
+    .tx-row:hover {
+      transform: translateX(2px);
+    }
+    .tx-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tx-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .tx-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    .tx-category {
+      font-size: 11px;
+      color: var(--text-gray);
+      margin-top: 2px;
+    }
+    .tx-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tx-amount {
+      font-size: 14px;
+      font-weight: 800;
+      text-align: right;
+    }
+    .tx-currency {
+      font-size: 10px;
+      color: var(--text-light);
+      text-align: right;
+    }
+    .tx-del-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--surface-sec);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-gray);
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .tx-del-btn:hover {
+      background: var(--coral-light);
+      color: var(--coral-danger);
+    }
+
+    /* Floating Navigation Dock */
+    .floating-nav {
+      position: absolute;
+      bottom: 16px;
+      left: 20px;
+      right: 20px;
+      height: 66px;
+      background: var(--card-white);
+      border-radius: 26px;
+      border: 1px solid var(--progress-track);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      z-index: 50;
+    }
+    .nav-group {
+      display: flex;
+      flex: 1;
+      justify-content: space-around;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      min-width: 48px;
+      min-height: 48px;
+      justify-content: center;
+      border-radius: 12px;
+      color: var(--text-gray);
+      transition: all 0.2s;
+    }
+    .nav-item.active {
+      color: var(--mint-dark);
+    }
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+    .nav-item span {
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .fab-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mint-primary), var(--mint-dark));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 208, 156, 0.4);
+      margin-top: -24px;
+      transition: transform 0.2s;
+    }
+    .fab-btn:hover {
+      transform: scale(1.06);
+    }
+
+    /* Bottom Sheets & Modals */
+    .sheet-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 80;
+      display: none;
+      align-items: flex-end;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .sheet-overlay.open {
+      display: flex;
+    }
+    .sheet-body {
+      width: 100%;
+      background: var(--card-white);
+      border-radius: 28px 28px 0 0;
+      padding: 24px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      max-height: 80%;
+      overflow-y: auto;
+    }
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--progress-track);
+      border-radius: 999px;
+      margin: 0 auto 16px auto;
+    }
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--text-dark);
+    }
+
+    .type-toggle {
+      display: flex;
+      background: var(--surface-sec);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+    .type-toggle button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: none;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-gray);
+      transition: all 0.2s;
+    }
+    .type-toggle button.active {
+      background: white;
+      color: var(--text-dark);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-gray);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--progress-track);
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-dark);
+      background: var(--surface-sec);
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--mint-primary);
+      background: white;
+    }
+
+    .category-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .cat-pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-sec);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cat-pill.selected {
+      background: var(--mint-light);
+      border-color: var(--mint-primary);
+      color: var(--mint-dark);
+      font-weight: 700;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--mint-primary), var(--mint-dark));
+      border: none;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 208, 156, 0.35);
+    }
+
+    /* Views */
+    .tab-view {
+      display: none;
+    }
+    .tab-view.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    /* Analytics Charts */
+    .cashflow-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--progress-track);
+      display: flex;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .cashflow-inflow {
+      background: var(--mint-primary);
+      width: 70%;
+    }
+    .cashflow-outflow {
+      background: var(--coral-danger);
+      width: 30%;
+    }
+
+    /* Budgets Progress */
+    .budget-meter {
+      height: 8px;
+      background: var(--progress-track);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .budget-fill {
+      height: 100%;
+      background: var(--mint-dark);
+      border-radius: 999px;
+      width: 61.6%;
+    }
+
+    /* Donut Chart SVG */
+    .donut-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      margin: 10px 0;
+    }
+    .donut-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .donut-center-text .pct {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+    .donut-center-text .cat {
+      font-size: 11px;
+      color: var(--text-gray);
+      font-weight: 600;
+    }
+
+    /* Settings Switch */
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--progress-track);
+    }
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+    .toggle-switch {
+      width: 44px;
+      height: 26px;
+      background: var(--mint-primary);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-switch.off {
+      background: var(--progress-track);
+    }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      right: 3px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+    .toggle-switch.off::after {
+      transform: translateX(-18px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Controls -->
+  <div class="top-controls">
+    <div class="badge-app-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      MoneTracka Live UI
+    </div>
+    <button class="ctrl-btn active" id="btnPhone">📱 Phone Frame</button>
+    <button class="ctrl-btn" id="btnExpand">🖥️ Full Canvas</button>
+    <button class="ctrl-btn" id="btnQuickAdd">+ Quick Add</button>
+  </div>
+
+  <!-- Device Wrapper (Phone Shell) -->
+  <div class="device-wrapper" id="deviceShell">
+    <div class="phone-screen">
+      <!-- Dynamic Island & Status Bar -->
+      <div class="dynamic-island"></div>
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-icons">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M5 20v-4"/><path d="M9 20v-8"/><path d="M13 20V8"/><path d="M17 20V4"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="10" x="2" y="7" rx="2" ry="2"/><line x1="22" x2="22" y1="11" y2="13"/></svg>
+        </div>
+      </div>
+
+      <!-- App Scroll Viewport -->
+      <div class="app-viewport">
+        
+        <!-- ── TAB 0: OVERVIEW ── -->
+        <div class="tab-view active" id="viewOverview">
+          <!-- User Header -->
+          <div class="user-header">
+            <div class="user-profile">
+              <div class="avatar-box">JD</div>
+              <div class="user-title-wrap">
+                <h4>TOTAL WEALTH</h4>
+                <h2 id="userNameDisplay">John Doe</h2>
+              </div>
+            </div>
+            <div class="bell-btn" onclick="alert('Notification Center: Budget alert: 61.6% consumed. All systems optimal!')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1F36" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <div class="bell-dot"></div>
+            </div>
+          </div>
+
+          <!-- Balance Hero Card -->
+          <div class="balance-card">
+            <div class="balance-label">NET BALANCE</div>
+            <div class="balance-amount" id="heroBalance">$12,450.80</div>
+            <div class="trend-badge">
+              <span>▲ +18.4%</span> this month
+            </div>
+            <!-- Cubic Spline Sparkline -->
+            <svg class="sparkline-svg" viewBox="0 0 320 60">
+              <defs>
+                <linearGradient id="gradSpark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <path d="M 0 50 Q 50 45, 90 28 T 180 32 T 260 12 T 320 5 L 320 60 L 0 60 Z" fill="url(#gradSpark)"/>
+              <path d="M 0 50 Q 50 45, 90 28 T 180 32 T 260 12 T 320 5" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Accounts Carousel -->
+          <div class="accounts-strip">
+            <div class="account-chip" onclick="openTransferModal('Checking Account', 'Main Savings')">
+              <div class="icon">💳</div>
+              <div class="name">Checking</div>
+              <div class="amt" id="accChecking">$5,240.00</div>
+            </div>
+            <div class="account-chip" onclick="openTransferModal('Main Savings', 'Checking Account')">
+              <div class="icon">🏦</div>
+              <div class="name">Main Savings</div>
+              <div class="amt" id="accSavings">$6,810.80</div>
+            </div>
+            <div class="account-chip" onclick="openTransferModal('Cash Wallet', 'Checking Account')">
+              <div class="icon">💵</div>
+              <div class="name">Cash Wallet</div>
+              <div class="amt">$400.00</div>
+            </div>
+            <div class="account-chip" onclick="alert('Add Account dialog')">
+              <div class="icon">➕</div>
+              <div class="name">New Account</div>
+              <div class="amt" style="color: var(--mint-dark)">Create</div>
+            </div>
+          </div>
+
+          <!-- Smart Coach Card -->
+          <div class="card coach-card">
+            <span class="coach-badge">💡 Smart Coach</span>
+            <h4 style="font-size: 14px; font-weight: 800; margin: 4px 0;">Dining Budget on Track</h4>
+            <p style="font-size: 12px; color: var(--text-gray); line-height: 1.4;">
+              You spent 12% less on restaurant dining this week compared to last week. You're on pace to save an extra $140 this month!
+            </p>
+          </div>
+
+          <!-- Daily Quote Card -->
+          <div class="card quote-card">
+            <div class="quote-text" id="quoteText">"Do not save what is left after spending, but spend what is left after saving."</div>
+            <div class="quote-author">
+              <span id="quoteAuthor">— Warren Buffett</span>
+              <button class="quote-refresh-btn" onclick="cycleQuote()">↻ Next Quote</button>
+            </div>
+          </div>
+
+          <!-- Quick Action Bar -->
+          <div class="quick-actions">
+            <div class="qa-btn" onclick="openAddModal('EXPENSE')">
+              <div class="qa-icon" style="background: var(--coral-light); color: var(--coral-danger)">💸</div>
+              <div class="qa-label">Expense</div>
+            </div>
+            <div class="qa-btn" onclick="openAddModal('INCOME')">
+              <div class="qa-icon" style="background: var(--mint-light); color: var(--mint-dark)">💰</div>
+              <div class="qa-label">Income</div>
+            </div>
+            <div class="qa-btn" onclick="openTransferModal('Checking Account', 'Main Savings')">
+              <div class="qa-icon" style="background: #EFF6FF; color: #2563EB">🔁</div>
+              <div class="qa-label">Transfer</div>
+            </div>
+            <div class="qa-btn" onclick="switchTab(1)">
+              <div class="qa-icon" style="background: #F3E8FF; color: #9333EA">📊</div>
+              <div class="qa-label">Insights</div>
+            </div>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div class="section-header">
+            <div class="section-title">Recent Transactions</div>
+            <div class="section-link" onclick="switchTab(1)">See Breakdown →</div>
+          </div>
+          <div id="txListContainer"></div>
+        </div>
+
+        <!-- ── TAB 1: ANALYTICS ── -->
+        <div class="tab-view" id="viewAnalytics">
+          <h2 style="font-size: 22px; font-weight: 800; margin: 8px 0 16px 0;">Spending Analytics</h2>
+          
+          <!-- Cashflow Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between;">
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-gray);">TOTAL INFLOW</div>
+                <div style="font-size: 18px; font-weight: 800; color: var(--mint-dark);">+$4,500.00</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-gray);">TOTAL OUTFLOW</div>
+                <div style="font-size: 18px; font-weight: 800; color: var(--coral-danger);">-$1,850.00</div>
+              </div>
+            </div>
+
+            <div class="cashflow-bar">
+              <div class="cashflow-inflow"></div>
+              <div class="cashflow-outflow"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
+              <span style="color: var(--mint-dark);">Net: +$2,650.00</span>
+              <span style="color: var(--text-gray);">Savings Rate: 58.9%</span>
+            </div>
+          </div>
+
+          <!-- Donut Insights -->
+          <div class="card">
+            <div class="section-title" style="margin-bottom: 12px;">Top Spending Categories</div>
+            <div class="donut-container">
+              <svg width="180" height="180" viewBox="0 0 100 100">
+                <!-- Slices: Food (35%), Transport (20%), Shopping (25%), Bills (20%) -->
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#E5E7EB" stroke-width="14"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#FF5A79" stroke-width="14" stroke-dasharray="83.5 238.7" stroke-dashoffset="0" onclick="inspectCategory('Food & Dining', '$647.50', '35%')"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#00D09C" stroke-width="14" stroke-dasharray="59.7 238.7" stroke-dashoffset="-83.5" onclick="inspectCategory('Shopping', '$462.50', '25%')"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#00B4D8" stroke-width="14" stroke-dasharray="47.7 238.7" stroke-dashoffset="-143.2" onclick="inspectCategory('Transport', '$370.00', '20%')"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#FFB300" stroke-width="14" stroke-dasharray="47.7 238.7" stroke-dashoffset="-191" onclick="inspectCategory('Housing & Bills', '$370.00', '20%')"/>
+              </svg>
+              <div class="donut-center-text">
+                <div class="pct" id="donutPct">35%</div>
+                <div class="cat" id="donutCat">Food & Dining</div>
+              </div>
+            </div>
+            <div style="font-size: 11px; text-align: center; color: var(--text-gray); margin-top: 4px;">Tap a donut slice to inspect details</div>
+          </div>
+
+          <!-- Net Worth Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-gray); font-weight: 700;">TOTAL NET WORTH</div>
+                <div style="font-size: 20px; font-weight: 800; color: var(--text-dark);">$12,450.80</div>
+              </div>
+              <span style="background: var(--mint-light); color: var(--mint-dark); font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px;">30D Trend ▲</span>
+            </div>
+            <svg class="sparkline-svg" viewBox="0 0 320 60">
+              <path d="M 0 45 Q 60 42, 120 25 T 240 18 T 320 8" fill="none" stroke="#00D09C" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- ── TAB 2: BUDGETS ── -->
+        <div class="tab-view" id="viewBudgets">
+          <h2 style="font-size: 22px; font-weight: 800; margin: 8px 0 16px 0;">Monthly Budgets</h2>
+
+          <!-- Main Target Card -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-gray);">MONTHLY TARGET</div>
+                <span style="font-size: 11px; font-weight: 800; color: var(--mint-dark); background: var(--mint-light); padding: 3px 8px; border-radius: 6px; display: inline-block; margin-top: 4px;" id="budgetBurnBadge">
+                  On Track (61.6%)
+                </span>
+              </div>
+              <button class="ctrl-btn" onclick="openAdjustBudgetModal()" style="font-size: 12px; background: var(--surface-sec); color: var(--mint-dark);">Adjust Target</button>
+            </div>
+
+            <div style="font-size: 22px; font-weight: 800; margin: 14px 0 6px 0;" id="budgetTextDisplay">
+              $1,850.00 / $3,000.00
+            </div>
+
+            <div class="budget-meter">
+              <div class="budget-fill" id="budgetMeterFill"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: var(--text-gray);">Remaining to spend</span>
+              <span style="font-weight: 800; color: var(--mint-dark);" id="budgetRemainingDisplay">$1,150.00</span>
+            </div>
+          </div>
+
+          <!-- Category Budget Limits -->
+          <div class="section-title" style="margin: 16px 0 10px 0;">Category Budgets</div>
+          <div class="card" style="padding: 14px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
+              <span>🍔 Food & Dining</span>
+              <span style="color: var(--coral-danger);">$647.50 / $700.00</span>
+            </div>
+            <div class="budget-meter" style="margin: 8px 0;"><div class="budget-fill" style="width: 92%; background: var(--coral-danger);"></div></div>
+            <div style="font-size: 11px; color: var(--coral-danger); font-weight: 700;">⚠️ Approaching 92% limit</div>
+          </div>
+
+          <div class="card" style="padding: 14px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
+              <span>🛍️ Shopping</span>
+              <span style="color: var(--mint-dark);">$462.50 / $800.00</span>
+            </div>
+            <div class="budget-meter" style="margin: 8px 0;"><div class="budget-fill" style="width: 57%; background: var(--mint-primary);"></div></div>
+            <div style="font-size: 11px; color: var(--text-gray);">57% used ($337.50 left)</div>
+          </div>
+
+          <div class="card" style="padding: 14px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
+              <span>🚗 Transport</span>
+              <span style="color: var(--mint-dark);">$370.00 / $500.00</span>
+            </div>
+            <div class="budget-meter" style="margin: 8px 0;"><div class="budget-fill" style="width: 74%; background: var(--cyan-accent);"></div></div>
+            <div style="font-size: 11px; color: var(--text-gray);">74% used ($130.00 left)</div>
+          </div>
+        </div>
+
+        <!-- ── TAB 3: SETTINGS ── -->
+        <div class="tab-view" id="viewSettings">
+          <h2 style="font-size: 22px; font-weight: 800; margin: 8px 0 16px 0;">Settings & Preferences</h2>
+
+          <div class="card">
+            <div class="settings-row">
+              <div>
+                <div style="font-size: 14px; font-weight: 700;">Profile Name</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Local account identifier</div>
+              </div>
+              <div style="font-weight: 800; color: var(--mint-dark);">John Doe</div>
+            </div>
+
+            <div class="settings-row" onclick="openCurrencyModal()" style="cursor: pointer;">
+              <div>
+                <div style="font-size: 14px; font-weight: 700;">Active Currency</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Tap to switch symbol</div>
+              </div>
+              <div style="font-weight: 800; color: var(--mint-dark); background: var(--mint-light); padding: 4px 8px; border-radius: 6px;" id="currentCurrencyLabel">USD ($)</div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div style="font-size: 14px; font-weight: 700;">App Version</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Architecture: KMP + Compose</div>
+              </div>
+              <div style="font-weight: 600; color: var(--text-gray);">1.0.0 Pro Max</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size: 14px; font-weight: 800; margin-bottom: 6px;">Data & Backups</div>
+            <p style="font-size: 12px; color: var(--text-gray); margin-bottom: 12px;">Export or restore your transaction database in CSV format.</p>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-submit" style="padding: 10px; font-size: 13px;" onclick="exportCsv()">📥 Export CSV</button>
+              <button class="ctrl-btn" style="flex: 1; padding: 10px; font-size: 13px;" onclick="alert('Import feature ready for JSON / CSV')">📤 Import</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div>
+                <div style="font-size: 14px; font-weight: 700;">Biometric App Lock</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Require Face ID / Fingerprint</div>
+              </div>
+              <div class="toggle-switch" id="bioToggle" onclick="toggleBiometrics()"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Floating Navigation Bar Dock -->
+      <div class="floating-nav">
+        <div class="nav-group">
+          <div class="nav-item active" onclick="switchTab(0)" id="nav0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Overview</span>
+          </div>
+          <div class="nav-item" onclick="switchTab(1)" id="nav1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            <span>Analytics</span>
+          </div>
+        </div>
+
+        <button class="fab-btn" onclick="openAddModal('EXPENSE')">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+
+        <div class="nav-group">
+          <div class="nav-item" onclick="switchTab(2)" id="nav2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+            <span>Budgets</span>
+          </div>
+          <div class="nav-item" onclick="switchTab(3)" id="nav3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Settings</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: ADD TRANSACTION ── -->
+      <div class="sheet-overlay" id="sheetAdd">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">New Transaction</div>
+
+          <div class="type-toggle">
+            <button class="active" id="btnTypeExpense" onclick="setType('EXPENSE')">Expense</button>
+            <button id="btnTypeIncome" onclick="setType('INCOME')">Income</button>
+          </div>
+
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" step="0.01" class="form-input" id="inputAmount" placeholder="0.00" autofocus>
+          </div>
+
+          <div class="form-group">
+            <label>Category</label>
+            <div class="category-pills" id="catPills">
+              <div class="cat-pill selected" onclick="selectCat(this, '🍔 Food & Dining')">🍔 Dining</div>
+              <div class="cat-pill" onclick="selectCat(this, '🛍️ Shopping')">🛍️ Shopping</div>
+              <div class="cat-pill" onclick="selectCat(this, '🚗 Transport')">🚗 Transport</div>
+              <div class="cat-pill" onclick="selectCat(this, '💡 Utilities')">💡 Utilities</div>
+              <div class="cat-pill" onclick="selectCat(this, '💼 Salary')">💼 Salary</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Note / Payee</label>
+            <input type="text" class="form-input" id="inputNote" placeholder="e.g. Blue Bottle Coffee">
+          </div>
+
+          <button class="btn-submit" onclick="submitTransaction()">Save Transaction</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px;" onclick="closeModal('sheetAdd')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: TRANSFER ── -->
+      <div class="sheet-overlay" id="sheetTransfer">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">Transfer Funds</div>
+          <div style="font-size: 13px; color: var(--text-gray); margin-bottom: 14px;">
+            Move money instantly between your accounts.
+          </div>
+          <div class="form-group">
+            <label>From</label>
+            <input type="text" class="form-input" id="txFromAcc" readonly value="Checking Account">
+          </div>
+          <div class="form-group">
+            <label>To</label>
+            <input type="text" class="form-input" id="txToAcc" readonly value="Main Savings">
+          </div>
+          <div class="form-group">
+            <label>Transfer Amount ($)</label>
+            <input type="number" class="form-input" id="txAmount" value="200.00">
+          </div>
+          <button class="btn-submit" onclick="executeTransfer()">Confirm Transfer</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px;" onclick="closeModal('sheetTransfer')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: ADJUST BUDGET ── -->
+      <div class="sheet-overlay" id="sheetBudget">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">Adjust Monthly Budget Target</div>
+          <div class="form-group">
+            <label>Target Limit ($)</label>
+            <input type="number" class="form-input" id="budgetLimitInput" value="3000">
+          </div>
+          <button class="btn-submit" onclick="saveNewBudget()">Update Target</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px;" onclick="closeModal('sheetBudget')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: SELECT CURRENCY ── -->
+      <div class="sheet-overlay" id="sheetCurrency">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">Select Currency</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="card" style="padding: 12px; margin: 0; cursor: pointer;" onclick="changeCurrency('USD', '$')">USD — US Dollar ($)</div>
+            <div class="card" style="padding: 12px; margin: 0; cursor: pointer;" onclick="changeCurrency('EUR', '€')">EUR — Euro (€)</div>
+            <div class="card" style="padding: 12px; margin: 0; cursor: pointer;" onclick="changeCurrency('GBP', '£')">GBP — British Pound (£)</div>
+            <div class="card" style="padding: 12px; margin: 0; cursor: pointer;" onclick="changeCurrency('VND', '₫')">VND — Vietnamese Dong (₫)</div>
+            <div class="card" style="padding: 12px; margin: 0; cursor: pointer;" onclick="changeCurrency('JPY', '¥')">JPY — Japanese Yen (¥)</div>
+          </div>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 14px;" onclick="closeModal('sheetCurrency')">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // In-memory Mock State
+    const state = {
+      currency: 'USD',
+      symbol: '$',
+      totalBalance: 12450.80,
+      checking: 5240.00,
+      savings: 6810.80,
+      budgetLimit: 3000.00,
+      totalSpent: 1850.00,
+      selectedType: 'EXPENSE',
+      selectedCategory: '🍔 Food & Dining',
+      biometricsEnabled: true,
+      transactions: [
+        { id: 1, note: 'Starbucks Roast & Croissant', cat: '🍔 Food & Dining', emoji: '☕', amt: 8.50, type: 'EXPENSE' },
+        { id: 2, note: 'Trader Joe\'s Groceries', cat: '🍔 Food & Dining', emoji: '🥗', amt: 64.20, type: 'EXPENSE' },
+        { id: 3, note: 'Uber Ride Downtown', cat: '🚗 Transport', emoji: '🚗', amt: 24.50, type: 'EXPENSE' },
+        { id: 4, note: 'Freelance Design Retainer', cat: '💼 Salary', emoji: '💰', amt: 1200.00, type: 'INCOME' },
+        { id: 5, note: 'Netflix & Spotify Subs', cat: '💡 Utilities', emoji: '📺', amt: 29.98, type: 'EXPENSE' }
+      ],
+      quotes: [
+        { q: "Do not save what is left after spending, but spend what is left after saving.", a: "Warren Buffett" },
+        { q: "A budget is telling your money where to go instead of wondering where it went.", a: "Dave Ramsey" },
+        { q: "Beware of little expenses; a small leak will sink a great ship.", a: "Benjamin Franklin" },
+        { q: "Wealth is what you don't see. It's the cars not purchased, the watches not worn.", a: "Morgan Housel" },
+        { q: "Simplicity is the key to financial security and peace of mind.", a: "Charlie Munger" }
+      ],
+      quoteIndex: 0
+    };
+
+    function renderTransactions() {
+      const container = document.getElementById('txListContainer');
+      container.innerHTML = '';
+      state.transactions.forEach(tx => {
+        const isExp = tx.type === 'EXPENSE';
+        const color = isExp ? 'var(--coral-danger)' : 'var(--mint-dark)';
+        const prefix = isExp ? '-' : '+';
+        const bg = isExp ? 'var(--coral-light)' : 'var(--mint-light)';
+
+        const div = document.createElement('div');
+        div.className = 'tx-row';
+        div.innerHTML = `
+          <div class="tx-left">
+            <div class="tx-icon-box" style="background: ${bg}">${tx.emoji}</div>
+            <div>
+              <div class="tx-title">${tx.note}</div>
+              <div class="tx-category">${tx.cat}</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div>
+              <div class="tx-amount" style="color: ${color}">${prefix}${state.symbol}${tx.amt.toFixed(2)}</div>
+              <div class="tx-currency">${state.currency}</div>
+            </div>
+            <button class="tx-del-btn" onclick="deleteTx(${tx.id})" title="Delete">✕</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function deleteTx(id) {
+      const tx = state.transactions.find(t => t.id === id);
+      if (tx) {
+        if (tx.type === 'EXPENSE') {
+          state.totalBalance += tx.amt;
+          state.totalSpent -= tx.amt;
+        } else {
+          state.totalBalance -= tx.amt;
+        }
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('heroBalance').innerText = `${state.symbol}${state.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      document.getElementById('accChecking').innerText = `${state.symbol}${state.checking.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      document.getElementById('accSavings').innerText = `${state.symbol}${state.savings.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      
+      const pct = ((state.totalSpent / state.budgetLimit) * 100).toFixed(1);
+      document.getElementById('budgetTextDisplay').innerText = `${state.symbol}${state.totalSpent.toFixed(2)} / ${state.symbol}${state.budgetLimit.toFixed(2)}`;
+      document.getElementById('budgetMeterFill').style.width = `${Math.min(pct, 100)}%`;
+      document.getElementById('budgetRemainingDisplay').innerText = `${state.symbol}${Math.max(0, state.budgetLimit - state.totalSpent).toFixed(2)}`;
+      document.getElementById('budgetBurnBadge').innerText = `On Track (${pct}%)`;
+
+      renderTransactions();
+    }
+
+    function switchTab(index) {
+      document.querySelectorAll('.tab-view').forEach((v, i) => {
+        v.classList.toggle('active', i === index);
+      });
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`nav${i}`).classList.toggle('active', i === index);
+      }
+    }
+
+    function cycleQuote() {
+      state.quoteIndex = (state.quoteIndex + 1) % state.quotes.length;
+      const q = state.quotes[state.quoteIndex];
+      document.getElementById('quoteText').innerText = `"${q.q}"`;
+      document.getElementById('quoteAuthor').innerText = `— ${q.a}`;
+    }
+
+    function openAddModal(type) {
+      setType(type || 'EXPENSE');
+      document.getElementById('sheetAdd').classList.add('open');
+      document.getElementById('inputAmount').value = '';
+      document.getElementById('inputNote').value = '';
+    }
+
+    function setType(type) {
+      state.selectedType = type;
+      document.getElementById('btnTypeExpense').classList.toggle('active', type === 'EXPENSE');
+      document.getElementById('btnTypeIncome').classList.toggle('active', type === 'INCOME');
+    }
+
+    function selectCat(elem, cat) {
+      document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('selected'));
+      elem.classList.add('selected');
+      state.selectedCategory = cat;
+    }
+
+    function submitTransaction() {
+      const amt = parseFloat(document.getElementById('inputAmount').value);
+      const note = document.getElementById('inputNote').value.trim() || state.selectedCategory;
+      if (isNaN(amt) || amt <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+
+      let emoji = '💸';
+      if (state.selectedCategory.includes('Food')) emoji = '🍔';
+      else if (state.selectedCategory.includes('Shop')) emoji = '🛍️';
+      else if (state.selectedCategory.includes('Transport')) emoji = '🚗';
+      else if (state.selectedCategory.includes('Utilities')) emoji = '💡';
+      else if (state.selectedCategory.includes('Salary')) emoji = '💰';
+
+      const newTx = {
+        id: Date.now(),
+        note: note,
+        cat: state.selectedCategory,
+        emoji: emoji,
+        amt: amt,
+        type: state.selectedType
+      };
+
+      state.transactions.unshift(newTx);
+      if (state.selectedType === 'EXPENSE') {
+        state.totalBalance -= amt;
+        state.checking -= amt;
+        state.totalSpent += amt;
+      } else {
+        state.totalBalance += amt;
+        state.checking += amt;
+      }
+
+      closeModal('sheetAdd');
+      updateUI();
+    }
+
+    function openTransferModal(from, to) {
+      document.getElementById('txFromAcc').value = from;
+      document.getElementById('txToAcc').value = to;
+      document.getElementById('sheetTransfer').classList.add('open');
+    }
+
+    function executeTransfer() {
+      const amt = parseFloat(document.getElementById('txAmount').value);
+      if (isNaN(amt) || amt <= 0) return;
+      state.checking -= amt;
+      state.savings += amt;
+      state.transactions.unshift({
+        id: Date.now(),
+        note: 'Transfer to Savings',
+        cat: 'Internal Transfer',
+        emoji: '🔁',
+        amt: amt,
+        type: 'TRANSFER'
+      });
+      closeModal('sheetTransfer');
+      updateUI();
+    }
+
+    function openAdjustBudgetModal() {
+      document.getElementById('budgetLimitInput').value = state.budgetLimit;
+      document.getElementById('sheetBudget').classList.add('open');
+    }
+
+    function saveNewBudget() {
+      const limit = parseFloat(document.getElementById('budgetLimitInput').value);
+      if (limit > 0) {
+        state.budgetLimit = limit;
+        closeModal('sheetBudget');
+        updateUI();
+      }
+    }
+
+    function openCurrencyModal() {
+      document.getElementById('sheetCurrency').classList.add('open');
+    }
+
+    function changeCurrency(curr, sym) {
+      state.currency = curr;
+      state.symbol = sym;
+      document.getElementById('currentCurrencyLabel').innerText = `${curr} (${sym})`;
+      closeModal('sheetCurrency');
+      updateUI();
+    }
+
+    function toggleBiometrics() {
+      state.biometricsEnabled = !state.biometricsEnabled;
+      document.getElementById('bioToggle').classList.toggle('off', !state.biometricsEnabled);
+    }
+
+    function exportCsv() {
+      let csv = "id,note,category,amount,type,currency\n";
+      state.transactions.forEach(t => {
+        csv += `${t.id},"${t.note}","${t.cat}",${t.amt},${t.type},${state.currency}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MoneTracka_Export_${Date.now()}.csv`;
+      a.click();
+    }
+
+    function inspectCategory(name, amt, pct) {
+      document.getElementById('donutCat').innerText = name;
+      document.getElementById('donutPct').innerText = pct;
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // Top control handlers
+    document.getElementById('btnPhone').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('btnExpand').classList.remove('active');
+      document.getElementById('deviceShell').classList.remove('expanded');
+    };
+    document.getElementById('btnExpand').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('btnPhone').classList.remove('active');
+      document.getElementById('deviceShell').classList.add('expanded');
+    };
+    document.getElementById('btnQuickAdd').onclick = function() {
+      openAddModal('EXPENSE');
+    };
+
+    // Close overlays on click outside
+    document.querySelectorAll('.sheet-overlay').forEach(sheet => {
+      sheet.addEventListener('click', (e) => {
+        if (e.target === sheet) {
+          sheet.classList.remove('open');
+        }
+      });
+    });
+
+    // Init
+    updateUI();
+  </script>
+</body>
+</html>

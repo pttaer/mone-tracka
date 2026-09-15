@@ -15,6 +15,8 @@ import com.monetracka.shared.ui.home.HomeScreen
 import com.monetracka.shared.ui.onboarding.OnboardingScreen
 import org.koin.compose.koinInject
 
+import com.monetracka.shared.ui.theme.MoneTrackaColors
+
 class RootScreen : Screen {
 
     @Composable
@@ -34,7 +36,7 @@ class RootScreen : Screen {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF060B11))
+                .background(MoneTrackaColors.BackgroundLight)
         )
     }
 }

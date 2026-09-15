@@ -21,6 +21,8 @@
   - `recurring-transactions`: Added `RecurringTransactionEntity`, `RecurringTransactionRepository`, auto-posting check on app launch, interval selectors, and quick-add toggle.
   - `deep-analytics-networth`: Added comparative MoM flow visual, net savings rate calculation, and Net Worth timeline sparkline in `AnalyticsView`.
   - `security-and-auth`: Added `BiometricAuthManager` multiplatform expect/actual engine and UI toggle in `SettingsView`.
+  - `ui-ux-pro-max`: Migrated to bright fintech design system (Wallet by BudgetBakers aesthetic); eliminated all emoji chrome in favor of vector icons; upgraded touch targets to 48dp+ with tactile ripple feedback; elevated Overview, Analytics, Budgets, and Settings cards; updated TransactionListScreen with search clear and segmented pills; verified 100% test pass.
+  - `ponytail-simplifications`: Purged dead OLED color tokens from `Color.kt`, compressed `SimpleCsvExporter` to 29 lines using stdlib `buildString` and `lineSequence`, and simplified `QuoteRepositoryImpl` with compact expressions; verified with 100% test pass.
 
 
 ## Key Rules & Architectural Guardrails

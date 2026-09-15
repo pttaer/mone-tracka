@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.model.CategorySpend
 import com.monetracka.shared.domain.util.CurrencyFormatter
 import com.monetracka.shared.ui.theme.CategoryColors
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 @Composable
 fun CategoryDonutChart(
@@ -60,7 +61,7 @@ fun CategoryDonutChart(
             val expandedStroke = 11.dp.toPx()
 
             drawCircle(
-                color = Color.White.copy(alpha = 0.06f),
+                color = MoneTrackaColors.ProgressTrack,
                 style = Stroke(baseStroke)
             )
 
@@ -102,21 +103,21 @@ fun CategoryDonutChart(
                 )
                 Text(
                     text = CurrencyFormatter.format(activeCategory.amount, currency),
-                    color = Color.White,
+                    color = MoneTrackaColors.TextDark,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = "${activeCategory.percentage.toInt()}%",
-                    color = Color(0xFF8FA2B6),
+                    color = MoneTrackaColors.TextGray,
                     fontSize = 8.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             } else {
                 Text(
                     text = totalText ?: CurrencyFormatter.format(totalSpend, currency),
-                    color = Color.White,
+                    color = MoneTrackaColors.TextDark,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center

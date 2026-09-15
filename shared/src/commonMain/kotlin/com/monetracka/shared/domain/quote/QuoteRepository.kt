@@ -4,12 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-enum class QuoteCategory {
-    SAVING,
-    DISCIPLINE,
-    INVESTING,
-    MINDSET
-}
+enum class QuoteCategory { SAVING, DISCIPLINE, INVESTING, MINDSET }
 
 data class FinancialQuote(
     val id: String,
@@ -39,17 +34,10 @@ class QuoteRepositoryImpl : QuoteRepository {
     )
 
     override fun getDailyQuote(): FinancialQuote {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val dayOfYear = now.dayOfYear
+        val dayOfYear = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).dayOfYear
         return allQuotes[dayOfYear % allQuotes.size]
     }
 
-    override fun getRandomQuote(excludeId: String?): FinancialQuote {
-        val candidates = if (excludeId != null && allQuotes.size > 1) {
-            allQuotes.filter { it.id != excludeId }
-        } else {
-            allQuotes
-        }
-        return candidates.random()
-    }
+    override fun getRandomQuote(excludeId: String?): FinancialQuote =
+        allQuotes.filter { it.id != excludeId }.ifEmpty { allQuotes }.random()
 }

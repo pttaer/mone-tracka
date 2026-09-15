@@ -5,11 +5,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,6 +23,7 @@ import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.domain.util.CurrencyFormatter
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 @Composable
 fun TransactionRow(
@@ -31,9 +36,9 @@ fun TransactionRow(
     val isTransfer = tx.type == TransactionType.TRANSFER
     val isExpense = tx.type == TransactionType.EXPENSE
     val amountColor = when {
-        isTransfer -> Color(0xFFD1DBE6)
-        isExpense -> Color(0xFFFF5A79)
-        else -> Color(0xFF00D09C)
+        isTransfer -> MoneTrackaColors.TextGray
+        isExpense -> MoneTrackaColors.CoralDanger
+        else -> MoneTrackaColors.MintDark
     }
     val amountPrefix = when {
         isTransfer -> ""
@@ -57,12 +62,19 @@ fun TransactionRow(
         else -> categoryName
     }
 
+    val emojiIconBg = when {
+        isTransfer -> MoneTrackaColors.SurfaceSecondary
+        isExpense -> Color(0xFFFFEBEE)
+        else -> MoneTrackaColors.MintLight
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF172535))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
+            .shadow(2.dp, RoundedCornerShape(16.dp), spotColor = MoneTrackaColors.CardShadowColor)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MoneTrackaColors.CardWhite)
+            .border(1.dp, MoneTrackaColors.ProgressTrack, RoundedCornerShape(16.dp))
             .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -73,7 +85,7 @@ fun TransactionRow(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(amountColor.copy(alpha = 0.15f))
+                    .background(emojiIconBg)
             ) {
                 Text(
                     text = categoryEmoji,
@@ -83,14 +95,13 @@ fun TransactionRow(
             Column {
                 Text(
                     text = title,
-                    color = Color.White,
+                    color = MoneTrackaColors.TextDark,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(text = categoryName, color = Color(0xFF8FA2B6), fontSize = 11.sp)
+                Text(text = categoryName, color = MoneTrackaColors.TextGray, fontSize = 11.sp)
             }
         }
-
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(horizontalAlignment = Alignment.End) {
@@ -100,19 +111,24 @@ fun TransactionRow(
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
-                Text(text = currency, color = Color(0xFF54687F), fontSize = 10.sp)
+                Text(text = currency, color = MoneTrackaColors.TextLight, fontSize = 10.sp)
             }
 
             if (onDelete != null) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.05f))
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .clickable { onDelete(tx.id) }
                 ) {
-                    Text(text = "✕", color = Color(0xFF8FA2B6), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Delete transaction",
+                        tint = MoneTrackaColors.TextGray,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         }

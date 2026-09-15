@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.util.CurrencyFormatter
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -56,7 +57,7 @@ fun TransferBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF0C1622),
+        containerColor = MoneTrackaColors.CardWhite,
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -64,7 +65,7 @@ fun TransferBottomSheet(
                     .width(44.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.2f))
+                    .background(MoneTrackaColors.ProgressTrack)
             )
         },
         modifier = modifier
@@ -86,7 +87,7 @@ fun TransferBottomSheet(
                     text = "Transfer Funds",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MoneTrackaColors.TextDark
                 )
 
                 Box(
@@ -94,10 +95,10 @@ fun TransferBottomSheet(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.06f))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .clickable { onDismiss() }
                 ) {
-                    Text(text = "✕", color = Color(0xFF8FA2B6), fontSize = 14.sp)
+                    Text(text = "✕", color = MoneTrackaColors.TextGray, fontSize = 14.sp)
                 }
             }
 
@@ -106,20 +107,19 @@ fun TransferBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF131F2E))
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                    .background(MoneTrackaColors.SurfaceSecondary)
                     .padding(14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Source
                 Column(horizontalAlignment = Alignment.Start, modifier = Modifier.weight(1f)) {
-                    Text(text = "FROM", color = Color(0xFF8FA2B6), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "FROM", color = MoneTrackaColors.TextGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(text = sourceAccount.emoji, fontSize = 18.sp)
                         Text(
                             text = sourceAccount.name,
-                            color = Color.White,
+                            color = MoneTrackaColors.TextDark,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1
@@ -127,7 +127,7 @@ fun TransferBottomSheet(
                     }
                     Text(
                         text = CurrencyFormatter.format(sourceBalance, currency),
-                        color = Color(0xFF00D09C),
+                        color = MoneTrackaColors.MintPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -135,7 +135,7 @@ fun TransferBottomSheet(
 
                 Text(
                     text = "➔",
-                    color = Color(0xFF00D09C),
+                    color = MoneTrackaColors.MintPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -143,11 +143,11 @@ fun TransferBottomSheet(
 
                 // Target
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.weight(1f)) {
-                    Text(text = "TO", color = Color(0xFF8FA2B6), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "TO", color = MoneTrackaColors.TextGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             text = targetAccount.name,
-                            color = Color.White,
+                            color = MoneTrackaColors.TextDark,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1
@@ -156,7 +156,7 @@ fun TransferBottomSheet(
                     }
                     Text(
                         text = CurrencyFormatter.format(targetBalance, currency),
-                        color = Color(0xFF00D09C),
+                        color = MoneTrackaColors.MintPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -166,7 +166,7 @@ fun TransferBottomSheet(
 
             // Amount Input Field
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "TRANSFER AMOUNT", color = Color(0xFF8FA2B6), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = "TRANSFER AMOUNT", color = MoneTrackaColors.TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { input ->
@@ -175,19 +175,19 @@ fun TransferBottomSheet(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    prefix = { Text(text = CurrencyFormatter.symbol(currency), color = Color(0xFF00D09C), fontSize = 24.sp, fontWeight = FontWeight.Bold) },
+                    prefix = { Text(text = CurrencyFormatter.symbol(currency), color = MoneTrackaColors.MintPrimary, fontSize = 24.sp, fontWeight = FontWeight.Bold) },
                     textStyle = androidx.compose.ui.text.TextStyle(
-                        color = Color.White,
+                        color = MoneTrackaColors.TextDark,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     ),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF00D09C),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedContainerColor = Color(0xFF131F2E),
-                        unfocusedContainerColor = Color(0xFF131F2E)
+                        focusedBorderColor = MoneTrackaColors.MintPrimary,
+                        unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                        focusedContainerColor = MoneTrackaColors.SurfaceSecondary,
+                        unfocusedContainerColor = MoneTrackaColors.SurfaceSecondary
                     ),
                     shape = RoundedCornerShape(16.dp)
                 )
@@ -203,8 +203,7 @@ fun TransferBottomSheet(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF172535))
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                            .background(MoneTrackaColors.SurfaceSecondary)
                             .clickable {
                                 val cur = amountText.toDoubleOrNull() ?: 0.0
                                 amountText = (cur + preset).toInt().toString()
@@ -212,7 +211,7 @@ fun TransferBottomSheet(
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "+$$preset", color = Color(0xFF00D09C), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "+$$preset", color = MoneTrackaColors.MintPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -221,15 +220,14 @@ fun TransferBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF172535))
-                        .border(1.dp, Color(0xFF00D09C).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .background(MoneTrackaColors.MintLight)
                         .clickable {
                             amountText = if (sourceBalance > 0) sourceBalance.toInt().toString() else "0"
                         }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "All", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "All", color = MoneTrackaColors.MintPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -238,14 +236,13 @@ fun TransferBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF101B27))
-                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                    .background(MoneTrackaColors.SurfaceSecondary)
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "PROJECTED BALANCES AFTER TRANSFER",
-                    color = Color(0xFF54687F),
+                    color = MoneTrackaColors.TextLight,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
@@ -256,13 +253,13 @@ fun TransferBottomSheet(
                 ) {
                     Text(
                         text = "${sourceAccount.name}: ${CurrencyFormatter.format(projectedSource, currency)}",
-                        color = if (isOverdraft) Color(0xFFFFB300) else Color(0xFF8FA2B6),
+                        color = if (isOverdraft) MoneTrackaColors.AmberWarning else MoneTrackaColors.TextGray,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "-${CurrencyFormatter.format(transferAmount, currency)}",
-                        color = Color(0xFFFF5A79),
+                        color = MoneTrackaColors.CoralDanger,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -273,13 +270,13 @@ fun TransferBottomSheet(
                 ) {
                     Text(
                         text = "${targetAccount.name}: ${CurrencyFormatter.format(projectedTarget, currency)}",
-                        color = Color(0xFF8FA2B6),
+                        color = MoneTrackaColors.TextGray,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "+${CurrencyFormatter.format(transferAmount, currency)}",
-                        color = Color(0xFF00D09C),
+                        color = MoneTrackaColors.MintPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -289,7 +286,7 @@ fun TransferBottomSheet(
                 if (isOverdraft) {
                     Text(
                         text = "⚠️ Amount exceeds available balance in ${sourceAccount.name}",
-                        color = Color(0xFFFFB300),
+                        color = MoneTrackaColors.AmberWarning,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -301,14 +298,14 @@ fun TransferBottomSheet(
                 value = noteText,
                 onValueChange = { noteText = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Note (optional, e.g. ATM withdrawal)", color = Color(0xFF54687F), fontSize = 13.sp) },
+                placeholder = { Text("Note (optional, e.g. ATM withdrawal)", color = MoneTrackaColors.TextLight, fontSize = 13.sp) },
                 singleLine = true,
-                textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 13.sp),
+                textStyle = androidx.compose.ui.text.TextStyle(color = MoneTrackaColors.TextDark, fontSize = 13.sp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00D09C),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.08f),
-                    focusedContainerColor = Color(0xFF131F2E),
-                    unfocusedContainerColor = Color(0xFF131F2E)
+                    focusedBorderColor = MoneTrackaColors.MintPrimary,
+                    unfocusedBorderColor = MoneTrackaColors.ProgressTrack,
+                    focusedContainerColor = MoneTrackaColors.SurfaceSecondary,
+                    unfocusedContainerColor = MoneTrackaColors.SurfaceSecondary
                 ),
                 shape = RoundedCornerShape(14.dp)
             )
@@ -346,10 +343,10 @@ fun SlideToTransferSlider(
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(if (enabled) Color(0xFF101D2C) else Color(0xFF101D2C).copy(alpha = 0.5f))
+            .background(if (enabled) MoneTrackaColors.SurfaceSecondary else MoneTrackaColors.SurfaceSecondary.copy(alpha = 0.5f))
             .border(
                 width = 1.5.dp,
-                color = if (enabled) Color(0xFF00D09C).copy(alpha = 0.4f) else Color.White.copy(alpha = 0.05f),
+                color = if (enabled) MoneTrackaColors.MintPrimary.copy(alpha = 0.4f) else MoneTrackaColors.ProgressTrack,
                 shape = RoundedCornerShape(28.dp)
             )
             .onGloballyPositioned { coordinates ->
@@ -364,7 +361,7 @@ fun SlideToTransferSlider(
         ) {
             Text(
                 text = if (enabled) "Slide to Transfer ➔" else "Enter an amount",
-                color = if (enabled) Color(0xFF8FA2B6) else Color(0xFF54687F),
+                color = if (enabled) MoneTrackaColors.TextGray else MoneTrackaColors.TextLight,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.5.sp
@@ -380,9 +377,9 @@ fun SlideToTransferSlider(
                 .clip(CircleShape)
                 .background(
                     if (enabled) {
-                        Brush.linearGradient(listOf(Color(0xFF00D09C), Color(0xFF00B085)))
+                        Brush.linearGradient(listOf(MoneTrackaColors.MintPrimary, MoneTrackaColors.MintDark))
                     } else {
-                        Brush.linearGradient(listOf(Color(0xFF54687F), Color(0xFF334354)))
+                        Brush.linearGradient(listOf(MoneTrackaColors.TextLight, MoneTrackaColors.ProgressTrack))
                     }
                 )
                 .pointerInput(enabled, maxDrag) {
@@ -418,7 +415,7 @@ fun SlideToTransferSlider(
         ) {
             Text(
                 text = "➔",
-                color = Color(0xFF051A12),
+                color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.ExtraBold
             )

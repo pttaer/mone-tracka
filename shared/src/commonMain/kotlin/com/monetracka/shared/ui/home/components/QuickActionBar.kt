@@ -9,11 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 @Composable
 fun QuickActionBar(
@@ -41,11 +41,22 @@ private fun QuickActionButton(label: String, icon: String, isPrimary: Boolean = 
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(54.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(if (isPrimary) Color(0xFF00D09C) else Color(0xFF172535))
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (isPrimary) MoneTrackaColors.MintPrimary else MoneTrackaColors.SurfaceSecondary)
         ) {
-            Text(icon, fontSize = if (isPrimary) 22.sp else 18.sp, fontWeight = FontWeight.Bold, color = if (isPrimary) Color(0xFF022015) else Color.White)
+            Text(
+                icon,
+                fontSize = if (isPrimary) 22.sp else 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isPrimary) Color.White else MoneTrackaColors.TextDark
+            )
         }
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = if (isPrimary) Color.White else Color(0xFF8FA2B6), modifier = Modifier.padding(top = 6.dp))
+        Text(
+            label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (isPrimary) MoneTrackaColors.TextDark else MoneTrackaColors.TextGray,
+            modifier = Modifier.padding(top = 6.dp)
+        )
     }
 }

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,18 +50,19 @@ fun FloatingNavBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Floating Glass Dock
+        // Floating White Dock with Shadow and Subtle Border
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .clip(RoundedCornerShape(26.dp))
-                .background(MoneTrackaColors.SurfaceGlass)
-                .border(1.dp, MoneTrackaColors.BorderGlassLuminous, RoundedCornerShape(26.dp))
-                .padding(horizontal = 12.dp),
+                .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = MoneTrackaColors.CardShadowColor)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MoneTrackaColors.CardWhite)
+                .border(1.dp, MoneTrackaColors.ProgressTrack, RoundedCornerShape(24.dp))
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -88,25 +87,21 @@ fun FloatingNavBar(
             }
         }
 
-        // Center Elevated Glow FAB
+        // Center Elevated Glow FAB with tactile ripple
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .offset(y = (-10).dp)
-                .size(54.dp)
-                .shadow(12.dp, CircleShape, ambientColor = MoneTrackaColors.MintPrimary, spotColor = MoneTrackaColors.MintPrimary)
+                .size(56.dp)
+                .shadow(10.dp, CircleShape, ambientColor = MoneTrackaColors.MintPrimary, spotColor = MoneTrackaColors.MintPrimary)
                 .clip(CircleShape)
                 .background(MoneTrackaColors.MintGradient)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onOpenAdd
-                )
+                .clickable(onClick = onOpenAdd)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Add Transaction",
-                tint = Color(0xFF051A12),
+                tint = Color.White,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -120,7 +115,7 @@ private fun NavButton(
     onSelect: () -> Unit
 ) {
     val iconColor by animateColorAsState(
-        targetValue = if (isSelected) MoneTrackaColors.MintPrimary else MoneTrackaColors.TextMuted,
+        targetValue = if (isSelected) MoneTrackaColors.MintDark else MoneTrackaColors.TextGray,
         animationSpec = spring()
     )
 
@@ -128,13 +123,10 @@ private fun NavButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
+            .defaultMinSize(minWidth = 52.dp, minHeight = 48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onSelect
-            )
-            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .clickable(onClick = onSelect)
+            .padding(horizontal = 6.dp, vertical = 4.dp)
     ) {
         Icon(
             imageVector = item.icon,
@@ -145,7 +137,7 @@ private fun NavButton(
         Text(
             text = item.label,
             color = iconColor,
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
         )
     }

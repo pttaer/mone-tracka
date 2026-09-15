@@ -1,7 +1,6 @@
 package com.monetracka.shared.ui.home.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,33 +23,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monetracka.shared.domain.coach.CoachInsight
 import com.monetracka.shared.domain.coach.InsightSeverity
+import com.monetracka.shared.ui.theme.MoneTrackaColors
 
 @Composable
 fun SmartCoachCard(
     insight: CoachInsight,
     modifier: Modifier = Modifier
 ) {
-    val (accentColor, bgColor, icon) = when (insight.severity) {
+    val (accentColor, bgTint, icon) = when (insight.severity) {
         InsightSeverity.WARNING -> Triple(
-            Color(0xFFFFB74D),
-            Color(0xFF241C10),
+            Color(0xFFFF9800),
+            Color(0xFFFFF3E0),
             Icons.Default.WarningAmber
         )
         InsightSeverity.CELEBRATION -> Triple(
-            Color(0xFF00E676),
-            Color(0xFF0D251A),
+            MoneTrackaColors.MintPrimary,
+            MoneTrackaColors.MintLight,
             Icons.Default.Celebration
         )
         InsightSeverity.INFO -> Triple(
-            Color(0xFF64B5F6),
-            Color(0xFF101B2A),
+            Color(0xFF2196F3),
+            Color(0xFFE3F2FD),
             Icons.Default.Info
         )
     }
@@ -58,19 +58,9 @@ fun SmartCoachCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(bgColor, Color(0xFF141416))
-                )
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.horizontalGradient(
-                    colors = listOf(accentColor.copy(alpha = 0.45f), Color.Transparent)
-                ),
-                shape = RoundedCornerShape(20.dp)
-            )
+            .shadow(4.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MoneTrackaColors.CardWhite)
             .padding(16.dp)
     ) {
         Column {
@@ -84,7 +74,7 @@ fun SmartCoachCard(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(accentColor.copy(alpha = 0.18f)),
+                            .background(bgTint),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -109,7 +99,7 @@ fun SmartCoachCard(
 
             Text(
                 text = insight.title,
-                color = Color.White,
+                color = MoneTrackaColors.TextDark,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -118,7 +108,7 @@ fun SmartCoachCard(
 
             Text(
                 text = insight.description,
-                color = Color(0xFFB0B3B8),
+                color = MoneTrackaColors.TextGray,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
             )
@@ -129,12 +119,12 @@ fun SmartCoachCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.White.copy(alpha = 0.05f))
+                        .background(MoneTrackaColors.SurfaceSecondary)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = "💡 Tip: ${insight.actionSuggestion}",
-                        color = Color(0xFFE0E0E0),
+                        color = MoneTrackaColors.TextDark,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )

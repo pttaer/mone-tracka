@@ -62,7 +62,7 @@ fun SparklineChart(
                 fillPath.close()
 
                 val fillBrush = Brush.verticalGradient(
-                    colors = listOf(lineColor.copy(alpha = 0.38f), lineColor.copy(alpha = 0.05f), Color.Transparent)
+                    colors = listOf(lineColor.copy(alpha = 0.25f), lineColor.copy(alpha = 0.03f), Color.Transparent)
                 )
                 val lineStroke = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
                 val outerDotStroke = Stroke(width = 1.5.dp.toPx())

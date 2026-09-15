@@ -1,7 +1,6 @@
 package com.monetracka.shared.ui.home.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -10,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,9 +34,9 @@ fun BalanceHeroCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(26.dp))
-            .background(MoneTrackaColors.HeroCardBrush)
-            .border(1.dp, MoneTrackaColors.BorderGlassLuminous, RoundedCornerShape(26.dp))
+            .shadow(8.dp, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(MoneTrackaColors.HeroGradientBrush)
             .padding(22.dp)
     ) {
         Column {
@@ -50,7 +50,7 @@ fun BalanceHeroCard(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
-                    color = MoneTrackaColors.TextSecondary
+                    color = Color.White.copy(alpha = 0.75f)
                 )
                 val currencyTag = when (currency) {
                     "EUR" -> "EUR (€)"
@@ -61,7 +61,7 @@ fun BalanceHeroCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.08f))
+                        .background(Color.White.copy(alpha = 0.20f))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
@@ -86,7 +86,7 @@ fun BalanceHeroCard(
                     text = decPart,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MoneTrackaColors.TextSecondary
+                    color = Color.White.copy(alpha = 0.70f)
                 )
             }
 
@@ -94,7 +94,8 @@ fun BalanceHeroCard(
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val isPositive = trendPercent >= 0
-                val trendColor = if (isPositive) MoneTrackaColors.MintPrimary else MoneTrackaColors.CoralDanger
+                val trendColor = if (isPositive) Color(0xFFB2FFE0) else Color(0xFFFFB2B2)
+                val trendBgColor = if (isPositive) Color.White.copy(alpha = 0.20f) else Color(0x33FF5A79)
                 val trendIcon = if (isPositive) "↑" else "↓"
                 val trendSign = if (isPositive) "+" else ""
                 val roundedTrend = (round(abs(trendPercent) * 10) / 10.0).toString()
@@ -102,7 +103,7 @@ fun BalanceHeroCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(trendColor.copy(alpha = 0.16f))
+                        .background(trendBgColor)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
@@ -114,7 +115,7 @@ fun BalanceHeroCard(
                 }
                 Text(
                     text = "net growth this month",
-                    color = MoneTrackaColors.TextSecondary,
+                    color = Color.White.copy(alpha = 0.70f),
                     fontSize = 11.sp
                 )
             }
@@ -122,7 +123,7 @@ fun BalanceHeroCard(
             Spacer(Modifier.height(16.dp))
             SparklineChart(
                 points = sparklinePoints,
-                lineColor = if (trendPercent >= 0) MoneTrackaColors.MintPrimary else MoneTrackaColors.CoralDanger
+                lineColor = Color.White.copy(alpha = 0.80f)
             )
         }
     }
