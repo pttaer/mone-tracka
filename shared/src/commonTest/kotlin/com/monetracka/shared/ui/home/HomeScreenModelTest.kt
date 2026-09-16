@@ -21,9 +21,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class FakeTransactionRepository(private val txs: List<Transaction>) : TransactionRepository {
-    override fun getAllTransactions(): Flow<List<Transaction>> = flowOf(txs)
-    override fun searchTransactions(query: String): Flow<List<Transaction>> = flowOf(txs.filter { it.note.contains(query, ignoreCase = true) })
-    override suspend fun insertTransaction(transaction: Transaction): Long = 1L
+    val inserted = mutableListOf<Transaction>()
+    override fun getAllTransactions(): Flow<List<Transaction>> = flowOf(txs + inserted)
+    override fun searchTransactions(query: String): Flow<List<Transaction>> = flowOf((txs + inserted).filter { it.note.contains(query, ignoreCase = true) })
+    override suspend fun insertTransaction(transaction: Transaction): Long {
+        inserted.add(transaction)
+        return 1L
+    }
     override suspend fun deleteTransaction(id: Long) {}
 }
 
@@ -53,6 +57,22 @@ class FakeUserProfileRepository(profile: com.monetracka.shared.domain.model.User
         profileFlow.value = profileFlow.value?.copy(currency = currency)
     }
     override suspend fun hasCompletedOnboarding(): Boolean = profileFlow.value?.hasCompletedOnboarding ?: false
+    override suspend fun updateBiometricEnabled(enabled: Boolean) {
+        profileFlow.value = profileFlow.value?.copy(isBiometricEnabled = enabled)
+    }
+    override suspend fun isBiometricEnabled(): Boolean = profileFlow.value?.isBiometricEnabled ?: false
+}
+
+class FakeCategoryBudgetRepository : com.monetracka.shared.domain.repository.CategoryBudgetRepository {
+    val budgets = mutableMapOf<Long, com.monetracka.shared.domain.model.CategoryBudget>()
+    override fun getAllCategoryBudgets(): Flow<List<com.monetracka.shared.domain.model.CategoryBudget>> = flowOf(budgets.values.toList())
+    override suspend fun getBudget(categoryId: Long): com.monetracka.shared.domain.model.CategoryBudget? = budgets[categoryId]
+    override suspend fun saveBudget(budget: com.monetracka.shared.domain.model.CategoryBudget) {
+        budgets[budget.categoryId] = budget
+    }
+    override suspend fun deleteBudget(categoryId: Long) {
+        budgets.remove(categoryId)
+    }
 }
 
 
@@ -232,6 +252,109 @@ class HomeScreenModelTest {
         testScheduler.advanceUntilIdle()
 
         assertEquals(3200.0, viewModel.state.value.monthlyBudgetLimit)
+    }
+
+    @Test
+    fun testToggleHideBalance() = runTest(testDispatcher) {
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(emptyList()),
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList())
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.state.value.isBalanceHidden)
+        viewModel.onIntent(HomeIntent.ToggleHideBalance)
+        assertEquals(true, viewModel.state.value.isBalanceHidden)
+        viewModel.onIntent(HomeIntent.ToggleHideBalance)
+        assertEquals(false, viewModel.state.value.isBalanceHidden)
+    }
+
+    @Test
+    fun testCreateTransactionWithSpecificAccount() = runTest(testDispatcher) {
+        val txRepo = FakeTransactionRepository(emptyList())
+        val viewModel = HomeScreenModel(
+            transactionRepository = txRepo,
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList())
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(
+            HomeIntent.CreateTransaction(
+                amount = 45.0,
+                type = TransactionType.EXPENSE,
+                categoryId = 2L,
+                accountId = 5L,
+                note = "Groceries"
+            )
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(1, txRepo.inserted.size)
+        assertEquals(5L, txRepo.inserted[0].accountId)
+        assertEquals(45.0, txRepo.inserted[0].amount)
+        assertEquals("Groceries", txRepo.inserted[0].note)
+    }
+
+    @Test
+    fun testImportTransactionsBatch() = runTest(testDispatcher) {
+        val txRepo = FakeTransactionRepository(emptyList())
+        val viewModel = HomeScreenModel(
+            transactionRepository = txRepo,
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList())
+        )
+        testScheduler.advanceUntilIdle()
+
+        val imported = listOf(
+            Transaction(id = 101L, amount = 12.0, type = TransactionType.EXPENSE, categoryId = 1L, accountId = 1L, note = "A", dateMillis = 1000L, createdAtMillis = 1000L),
+            Transaction(id = 102L, amount = 50.0, type = TransactionType.INCOME, categoryId = 2L, accountId = 1L, note = "B", dateMillis = 2000L, createdAtMillis = 2000L)
+        )
+        viewModel.onIntent(HomeIntent.ImportTransactions(imported))
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(2, txRepo.inserted.size)
+        assertEquals("A", txRepo.inserted[0].note)
+        assertEquals("B", txRepo.inserted[1].note)
+    }
+
+    @Test
+    fun testUpdateCategoryBudget() = runTest(testDispatcher) {
+        val budgetRepo = FakeCategoryBudgetRepository()
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(emptyList()),
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList()),
+            categoryBudgetRepository = budgetRepo
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.UpdateCategoryBudget(categoryId = 3L, newLimit = 450.0))
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(450.0, budgetRepo.budgets[3L]?.monthlyLimit)
+    }
+
+    @Test
+    fun testBiometricTogglePersistence() = runTest(testDispatcher) {
+        val userRepo = FakeUserProfileRepository(
+            com.monetracka.shared.domain.model.UserProfile(userName = "Thanh", isBiometricEnabled = false)
+        )
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(emptyList()),
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList()),
+            userProfileRepository = userRepo
+        )
+        testScheduler.advanceUntilIdle()
+        assertEquals(false, viewModel.state.value.isBiometricEnabled)
+
+        viewModel.onIntent(HomeIntent.SetBiometricEnabled(true))
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(true, userRepo.isBiometricEnabled())
+        assertEquals(true, viewModel.state.value.isBiometricEnabled)
     }
 }
 

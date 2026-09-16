@@ -43,4 +43,13 @@ class UserProfileTest {
         val customProfile = UserProfile(userName = "Thanh", monthlyBudgetLimit = 3500.0)
         assertEquals(3500.0, customProfile.monthlyBudgetLimit)
     }
+
+    @Test
+    fun testUserProfileIncludesBiometricEnabled() {
+        val defaultProfile = UserProfile(userName = "Thanh")
+        assertEquals(false, defaultProfile.isBiometricEnabled)
+
+        val securedProfile = UserProfile(userName = "Thanh", isBiometricEnabled = true)
+        assertEquals(true, securedProfile.isBiometricEnabled)
+    }
 }

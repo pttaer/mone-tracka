@@ -29,13 +29,18 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.monetracka.shared.domain.model.CategorySpend
+import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.domain.util.CurrencyFormatter
 import com.monetracka.shared.ui.home.components.*
+import com.monetracka.shared.domain.security.BiometricAuthManager
 import com.monetracka.shared.ui.theme.CategoryColors
 import com.monetracka.shared.ui.theme.MoneTrackaColors
 import com.monetracka.shared.ui.transaction.AddTransactionBottomSheet
 import com.monetracka.shared.ui.transaction.TransactionListScreen
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 class HomeScreen : Screen {
 
@@ -62,6 +67,7 @@ class HomeScreen : Screen {
                     listState = overviewListState,
                     onOpenAdd = { screenModel.onIntent(HomeIntent.OpenAddTransaction(it)) },
                     onRefreshQuote = { screenModel.onIntent(HomeIntent.RefreshQuote) },
+                    onToggleHideBalance = { screenModel.onIntent(HomeIntent.ToggleHideBalance) },
                     onNavigateToAnalytics = { selectedTab = 1 },
                     onNavigateToAllTransactions = { navigator.push(TransactionListScreen()) },
                     onDeleteTransaction = { screenModel.onIntent(HomeIntent.DeleteTransaction(it)) },
@@ -76,12 +82,15 @@ class HomeScreen : Screen {
                 2 -> BudgetsView(
                     state = state,
                     listState = budgetsListState,
-                    onOpenAdjustBudget = { screenModel.onIntent(HomeIntent.OpenAdjustBudget) }
+                    onOpenAdjustBudget = { screenModel.onIntent(HomeIntent.OpenAdjustBudget) },
+                    onOpenAdjustCategoryBudget = { screenModel.onIntent(HomeIntent.OpenAdjustCategoryBudget(it)) }
                 )
                 3 -> SettingsView(
                     state = state,
                     listState = settingsListState,
-                    onSelectCurrency = { newCurr -> screenModel.onIntent(HomeIntent.UpdateCurrency(newCurr)) }
+                    onSelectCurrency = { newCurr -> screenModel.onIntent(HomeIntent.UpdateCurrency(newCurr)) },
+                    onImportTransactions = { screenModel.onIntent(HomeIntent.ImportTransactions(it)) },
+                    onToggleBiometrics = { enabled -> screenModel.onIntent(HomeIntent.SetBiometricEnabled(enabled)) }
                 )
             }
 
@@ -97,14 +106,17 @@ class HomeScreen : Screen {
             AddTransactionBottomSheet(
                 isOpen = state.isAddSheetOpen,
                 categories = state.categories.values.toList(),
+                accounts = state.accounts,
                 initialType = state.addSheetInitialType,
+                currency = state.currency,
                 onDismiss = { screenModel.onIntent(HomeIntent.DismissAddTransaction) },
-                onSave = { amount, type, categoryId, note, isRecurring, interval ->
+                onSave = { amount, type, categoryId, accountId, note, isRecurring, interval ->
                     screenModel.onIntent(
                         HomeIntent.CreateTransaction(
                             amount = amount,
                             type = type,
                             categoryId = categoryId,
+                            accountId = accountId,
                             note = note,
                             isRecurring = isRecurring,
                             recurringInterval = interval
@@ -166,6 +178,61 @@ class HomeScreen : Screen {
                     }
                 )
             }
+
+            // Adjust Category Budget Target Dialog
+            if (state.isAdjustCategoryBudgetOpen && state.selectedCategoryBudgetSpend != null) {
+                val catSpend = state.selectedCategoryBudgetSpend!!
+                val catId = state.categories.entries.firstOrNull { it.value.name.equals(catSpend.category, ignoreCase = true) }?.key ?: 1L
+                val currentCatLimit = catSpend.budgetLimit ?: (state.monthlyBudgetLimit * (catSpend.percentage / 100.0).coerceAtLeast(0.05))
+                var limitInput by remember(catSpend) { mutableStateOf(currentCatLimit.toLong().toString()) }
+
+                AlertDialog(
+                    onDismissRequest = { screenModel.onIntent(HomeIntent.DismissAdjustCategoryBudget) },
+                    title = {
+                        Text("Adjust ${catSpend.category} Budget", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Set monthly spending limit for ${catSpend.category}:",
+                                color = MoneTrackaColors.TextGray,
+                                fontSize = 12.sp
+                            )
+                            OutlinedTextField(
+                                value = limitInput,
+                                onValueChange = { limitInput = it.filter { ch -> ch.isDigit() } },
+                                label = { Text("Limit (${state.currency})") },
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = MoneTrackaColors.TextDark,
+                                    unfocusedTextColor = MoneTrackaColors.TextDark,
+                                    focusedBorderColor = MoneTrackaColors.MintPrimary,
+                                    unfocusedBorderColor = MoneTrackaColors.ProgressTrack
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                val parsedLimit = limitInput.toDoubleOrNull() ?: currentCatLimit
+                                screenModel.onIntent(HomeIntent.UpdateCategoryBudget(catId, parsedLimit))
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Save", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { screenModel.onIntent(HomeIntent.DismissAdjustCategoryBudget) }) {
+                            Text("Cancel", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold)
+                        }
+                    },
+                    containerColor = MoneTrackaColors.CardWhite
+                )
+            }
         }
     }
 
@@ -175,6 +242,7 @@ class HomeScreen : Screen {
         listState: LazyListState,
         onOpenAdd: (TransactionType) -> Unit,
         onRefreshQuote: () -> Unit,
+        onToggleHideBalance: () -> Unit,
         onNavigateToAnalytics: () -> Unit,
         onNavigateToAllTransactions: () -> Unit,
         onDeleteTransaction: (Long) -> Unit,
@@ -182,6 +250,132 @@ class HomeScreen : Screen {
         onAddAccount: () -> Unit
     ) {
         val accountMap = remember(state.accounts) { state.accounts.associate { it.account.id to it.account } }
+        var showNotificationsDialog by remember { mutableStateOf(false) }
+        var hasUnreadNotifications by remember { mutableStateOf(true) }
+        var showScanBillDialog by remember { mutableStateOf(false) }
+        var selectedOverviewTx by remember { mutableStateOf<Transaction?>(null) }
+
+        TransactionDetailBottomSheet(
+            isOpen = selectedOverviewTx != null,
+            tx = selectedOverviewTx,
+            category = selectedOverviewTx?.let { state.categories[it.categoryId] },
+            accounts = accountMap,
+            currency = state.currency,
+            onDismiss = { selectedOverviewTx = null },
+            onDelete = {
+                onDeleteTransaction(it)
+                selectedOverviewTx = null
+            }
+        )
+
+        if (showNotificationsDialog) {
+            val totalExpense = state.categorySpends.sumOf { it.amount }
+            AlertDialog(
+                onDismissRequest = {
+                    hasUnreadNotifications = false
+                    showNotificationsDialog = false
+                },
+                title = {
+                    Text(
+                        text = "Notifications & Activity",
+                        color = MoneTrackaColors.TextDark,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MoneTrackaColors.MintLight)
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text("💡", fontSize = 18.sp)
+                            Column {
+                                Text("Smart Financial Insight", color = MoneTrackaColors.MintDark, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(
+                                    text = state.coachInsight?.description ?: "Keep tracking daily transactions to build accurate forecasting trends.",
+                                    color = MoneTrackaColors.TextDark,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (totalExpense > state.monthlyBudgetLimit) MoneTrackaColors.CoralDanger.copy(alpha = 0.12f) else MoneTrackaColors.SurfaceSecondary)
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(if (totalExpense > state.monthlyBudgetLimit) "⚠️" else "📊", fontSize = 18.sp)
+                            Column {
+                                Text("Monthly Budget Monitor", color = if (totalExpense > state.monthlyBudgetLimit) MoneTrackaColors.CoralDanger else MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(
+                                    text = "Spent ${CurrencyFormatter.format(totalExpense, state.currency)} of ${CurrencyFormatter.format(state.monthlyBudgetLimit, state.currency)} limit.",
+                                    color = MoneTrackaColors.TextGray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            hasUnreadNotifications = false
+                            showNotificationsDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Mark Read & Close", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = MoneTrackaColors.CardWhite
+            )
+        }
+
+        if (showScanBillDialog) {
+            AlertDialog(
+                onDismissRequest = { showScanBillDialog = false },
+                title = {
+                    Text("Scan Bill (OCR)", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                },
+                text = {
+                    Text(
+                        text = "Camera OCR scanner automatically parses receipts, vendor names, and totals directly into transactions. Would you like to log this expense manually in the meantime?",
+                        color = MoneTrackaColors.TextGray,
+                        fontSize = 13.sp
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showScanBillDialog = false
+                            onOpenAdd(TransactionType.EXPENSE)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Enter Manually", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showScanBillDialog = false }) {
+                        Text("Dismiss", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold)
+                    }
+                },
+                containerColor = MoneTrackaColors.CardWhite
+            )
+        }
+
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -241,7 +435,7 @@ class HomeScreen : Screen {
                             .clip(RoundedCornerShape(14.dp))
                             .background(MoneTrackaColors.CardWhite)
                             .border(1.dp, MoneTrackaColors.ProgressTrack, RoundedCornerShape(14.dp))
-                            .clickable { /* Notification center */ }
+                            .clickable { showNotificationsDialog = true }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
@@ -249,15 +443,17 @@ class HomeScreen : Screen {
                             tint = MoneTrackaColors.TextDark,
                             modifier = Modifier.size(20.dp)
                         )
-                        // Notification badge indicator
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                                .size(7.dp)
-                                .clip(CircleShape)
-                                .background(MoneTrackaColors.MintPrimary)
-                        )
+                        if (hasUnreadNotifications) {
+                            // Notification badge indicator
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(MoneTrackaColors.MintPrimary)
+                            )
+                        }
                     }
                 }
             }
@@ -268,7 +464,9 @@ class HomeScreen : Screen {
                     balance = state.totalBalance,
                     trendPercent = state.monthlyTrendPercent,
                     sparklinePoints = state.sparklinePoints,
-                    currency = state.currency
+                    currency = state.currency,
+                    isBalanceHidden = state.isBalanceHidden,
+                    onToggleHideBalance = onToggleHideBalance
                 )
             }
 
@@ -279,7 +477,8 @@ class HomeScreen : Screen {
                         accounts = state.accounts,
                         onInitiateTransfer = onInitiateTransfer,
                         onAddAccount = onAddAccount,
-                        currency = state.currency
+                        currency = state.currency,
+                        isBalanceHidden = state.isBalanceHidden
                     )
                 }
             }
@@ -306,7 +505,7 @@ class HomeScreen : Screen {
                 QuickActionBar(
                     onAddExpense = { onOpenAdd(TransactionType.EXPENSE) },
                     onIncome = { onOpenAdd(TransactionType.INCOME) },
-                    onScan = { onOpenAdd(TransactionType.EXPENSE) },
+                    onScan = { showScanBillDialog = true },
                     onMore = onNavigateToAnalytics
                 )
             }
@@ -397,6 +596,7 @@ class HomeScreen : Screen {
                         category = cat,
                         accounts = accountMap,
                         currency = state.currency,
+                        onClick = { selectedOverviewTx = tx },
                         onDelete = onDeleteTransaction
                     )
                 }
@@ -621,7 +821,8 @@ class HomeScreen : Screen {
     private fun BudgetsView(
         state: HomeUiState,
         listState: LazyListState,
-        onOpenAdjustBudget: () -> Unit
+        onOpenAdjustBudget: () -> Unit,
+        onOpenAdjustCategoryBudget: (CategorySpend) -> Unit
     ) {
         val totalSpent = remember(state.categorySpends) { state.categorySpends.sumOf { it.amount } }
         val monthlyBudget = state.monthlyBudgetLimit
@@ -636,12 +837,12 @@ class HomeScreen : Screen {
         }
         val burnColor = when {
             totalSpent > monthlyBudget -> MoneTrackaColors.CoralDanger
-            totalSpent > monthlyBudget * 0.8 -> MoneTrackaColors.AmberWarning
+            totalSpent > monthlyBudget * 0.8 -> Color(0xFFFF9800)
             else -> MoneTrackaColors.MintDark
         }
         val burnBadgeBg = when {
-            totalSpent > monthlyBudget -> MoneTrackaColors.CoralDanger.copy(alpha = 0.12f)
-            totalSpent > monthlyBudget * 0.8 -> MoneTrackaColors.AmberWarning.copy(alpha = 0.15f)
+            totalSpent > monthlyBudget -> Color(0xFFFFEBEE)
+            totalSpent > monthlyBudget * 0.8 -> Color(0xFFFFF3E0)
             else -> MoneTrackaColors.MintLight
         }
 
@@ -741,53 +942,76 @@ class HomeScreen : Screen {
                 }
             }
             item(key = "limits_title") {
-                Text(text = "Category Breakdown", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MoneTrackaColors.TextDark)
-            }
-            items(
-                items = state.categorySpends,
-                key = { it.category }
-            ) { cat ->
-                val catColor = CategoryColors.getOrElse(cat.colorIndex) { Color(cat.colorHex) }
-                val limit = cat.budgetLimit ?: (state.monthlyBudgetLimit * (cat.percentage / 100.0).coerceAtLeast(0.05))
-                val fraction = if (limit > 0.0) (cat.amount / limit).coerceIn(0.0, 1.0).toFloat() else 0f
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(14.dp), spotColor = MoneTrackaColors.CardShadowColor)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MoneTrackaColors.CardWhite)
-                        .border(1.dp, MoneTrackaColors.ProgressTrack, RoundedCornerShape(14.dp))
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(cat.category, color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                        Text(
-                            text = "${CurrencyFormatter.format(cat.amount, state.currency)} / ${CurrencyFormatter.format(limit, state.currency)}",
-                            color = if (cat.amount > limit) MoneTrackaColors.CoralDanger else catColor,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text(text = "Category Breakdown", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MoneTrackaColors.TextDark)
+                    Text(text = "Tap to edit limit", fontSize = 11.sp, color = MoneTrackaColors.TextGray)
+                }
+            }
 
-                    Box(
+            if (state.categorySpends.isEmpty()) {
+                item(key = "empty_budgets") {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
+                        Text("No expense categories recorded yet", color = MoneTrackaColors.TextGray, fontSize = 13.sp)
+                    }
+                }
+            } else {
+                items(
+                    items = state.categorySpends,
+                    key = { it.category }
+                ) { cat ->
+                    val catColor = CategoryColors.getOrElse(cat.colorIndex) { Color(cat.colorHex) }
+                    val limit = cat.budgetLimit ?: (state.monthlyBudgetLimit * (cat.percentage / 100.0).coerceAtLeast(0.05))
+                    val fraction = if (limit > 0.0) (cat.amount / limit).coerceIn(0.0, 1.0).toFloat() else 0f
+                    val catPercent = if (limit > 0.0) ((cat.amount / limit) * 100).toInt() else 0
+                    val catStatusColor = when {
+                        cat.amount > limit -> MoneTrackaColors.CoralDanger
+                        cat.amount > limit * 0.8 -> Color(0xFFFF9800)
+                        else -> catColor
+                    }
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(5.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(MoneTrackaColors.ProgressTrack)
+                            .shadow(2.dp, RoundedCornerShape(14.dp), spotColor = MoneTrackaColors.CardShadowColor)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(MoneTrackaColors.CardWhite)
+                            .border(1.dp, MoneTrackaColors.ProgressTrack, RoundedCornerShape(14.dp))
+                            .clickable { onOpenAdjustCategoryBudget(cat) }
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(cat.category, color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text(
+                                text = "${CurrencyFormatter.format(cat.amount, state.currency)} / ${CurrencyFormatter.format(limit, state.currency)} ($catPercent%)",
+                                color = catStatusColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(fraction = fraction)
-                                .fillMaxHeight()
+                                .fillMaxWidth()
+                                .height(5.dp)
                                 .clip(RoundedCornerShape(999.dp))
-                                .background(if (cat.amount > limit) MoneTrackaColors.CoralDanger else catColor)
-                        )
+                                .background(MoneTrackaColors.ProgressTrack)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(fraction = fraction)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(999.dp))
+                                    .background(catStatusColor)
+                            )
+                        }
                     }
                 }
             }
@@ -798,8 +1022,12 @@ class HomeScreen : Screen {
     private fun SettingsView(
         state: HomeUiState,
         listState: LazyListState,
-        onSelectCurrency: (String) -> Unit
+        onSelectCurrency: (String) -> Unit,
+        onImportTransactions: (List<Transaction>) -> Unit,
+        onToggleBiometrics: (Boolean) -> Unit
     ) {
+        val biometricAuthManager = koinInject<BiometricAuthManager>()
+        val scope = rememberCoroutineScope()
         var showCurrencyDialog by remember { mutableStateOf(false) }
         val currencyOptions = listOf(
             "USD" to "USD ($)",
@@ -841,6 +1069,138 @@ class HomeScreen : Screen {
                 confirmButton = {
                     TextButton(onClick = { showCurrencyDialog = false }) {
                         Text("Close", color = MoneTrackaColors.MintDark, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = MoneTrackaColors.CardWhite
+            )
+        }
+
+        var showExportDialog by remember { mutableStateOf(false) }
+        var showImportDialog by remember { mutableStateOf(false) }
+        var importText by remember { mutableStateOf("") }
+        var importValidationMsg by remember { mutableStateOf<String?>(null) }
+
+        if (showExportDialog) {
+            val csvContent = remember(state.recentTransactions) {
+                com.monetracka.shared.domain.export.SimpleCsvExporter.exportTransactions(state.recentTransactions)
+            }
+            var isCopied by remember { mutableStateOf(false) }
+
+            AlertDialog(
+                onDismissRequest = { showExportDialog = false },
+                title = {
+                    Text("Export Transactions", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "${state.recentTransactions.size} transactions ready for export.",
+                            color = MoneTrackaColors.MintDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "Standard RFC-4180 CSV format (type, amount, categoryId, accountId, note, date):",
+                            color = MoneTrackaColors.TextGray,
+                            fontSize = 12.sp
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 140.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MoneTrackaColors.SurfaceSecondary)
+                                .padding(10.dp)
+                        ) {
+                            Text(
+                                text = csvContent.ifBlank { "No transactions recorded yet." },
+                                color = MoneTrackaColors.TextDark,
+                                fontSize = 11.sp,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+                        if (isCopied) {
+                            Text(
+                                text = "✓ CSV exported to clipboard ready to share/save!",
+                                color = MoneTrackaColors.MintDark,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { isCopied = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(if (isCopied) "Copied!" else "Copy CSV", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showExportDialog = false }) {
+                        Text("Close", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold)
+                    }
+                },
+                containerColor = MoneTrackaColors.CardWhite
+            )
+        }
+
+        if (showImportDialog) {
+            AlertDialog(
+                onDismissRequest = { showImportDialog = false },
+                title = {
+                    Text("Import Transactions (CSV)", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Paste your CSV records below (Format: type,amount,categoryId,accountId,note,date):",
+                            color = MoneTrackaColors.TextGray,
+                            fontSize = 12.sp
+                        )
+                        OutlinedTextField(
+                            value = importText,
+                            onValueChange = {
+                                importText = it
+                                importValidationMsg = null
+                            },
+                            placeholder = { Text("EXPENSE,14.50,1,1,Lunch,1710000000000", fontSize = 11.sp, color = MoneTrackaColors.TextLight) },
+                            modifier = Modifier.fillMaxWidth().height(120.dp),
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = MoneTrackaColors.TextDark,
+                                unfocusedTextColor = MoneTrackaColors.TextDark,
+                                focusedBorderColor = MoneTrackaColors.MintPrimary,
+                                unfocusedBorderColor = MoneTrackaColors.ProgressTrack
+                            )
+                        )
+                        importValidationMsg?.let { msg ->
+                            Text(text = msg, color = if (msg.startsWith("✓")) MoneTrackaColors.MintDark else MoneTrackaColors.CoralDanger, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val parsed = com.monetracka.shared.domain.export.SimpleCsvExporter.parseTransactions(importText)
+                            if (parsed.isEmpty()) {
+                                importValidationMsg = "No valid records found in pasted CSV. Format must match exported CSV header."
+                            } else {
+                                onImportTransactions(parsed)
+                                importValidationMsg = "✓ Successfully imported ${parsed.size} records!"
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Validate & Import", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showImportDialog = false }) {
+                        Text("Cancel", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold)
                     }
                 },
                 containerColor = MoneTrackaColors.CardWhite
@@ -944,8 +1304,17 @@ class HomeScreen : Screen {
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MoneTrackaColors.MintLight)
                                 .clickable {
-                                    val csv = com.monetracka.shared.domain.export.SimpleCsvExporter.exportTransactions(state.recentTransactions)
-                                    // Stored/prepared in memory for export
+                                    if (state.isBiometricEnabled) {
+                                        scope.launch {
+                                            val ok = biometricAuthManager.authenticate(
+                                                title = "Export Financial Records",
+                                                subtitle = "Confirm your identity to export CSV"
+                                            )
+                                            if (ok) showExportDialog = true
+                                        }
+                                    } else {
+                                        showExportDialog = true
+                                    }
                                 }
                                 .padding(horizontal = 8.dp)
                         ) {
@@ -962,9 +1331,7 @@ class HomeScreen : Screen {
                                 .height(48.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MoneTrackaColors.SurfaceSecondary)
-                                .clickable {
-                                    // Document picker / import flow hook
-                                }
+                                .clickable { showImportDialog = true }
                                 .padding(horizontal = 8.dp)
                         ) {
                             Icon(Icons.Default.FileUpload, contentDescription = "Import", tint = MoneTrackaColors.TextDark, modifier = Modifier.size(18.dp))
@@ -975,7 +1342,6 @@ class HomeScreen : Screen {
                 }
             }
             item(key = "security_section") {
-                var isBiometricEnabled by remember { mutableStateOf(false) }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1003,8 +1369,17 @@ class HomeScreen : Screen {
                             Text("Require Face ID / Fingerprint to open", color = MoneTrackaColors.TextGray, fontSize = 11.sp)
                         }
                         Switch(
-                            checked = isBiometricEnabled,
-                            onCheckedChange = { isBiometricEnabled = it },
+                            checked = state.isBiometricEnabled,
+                            onCheckedChange = { targetState ->
+                                scope.launch {
+                                    val title = if (targetState) "Enable Biometric Lock" else "Disable Biometric Lock"
+                                    val subtitle = if (targetState) "Confirm identity to enable app lock" else "Confirm identity to disable app lock"
+                                    val success = biometricAuthManager.authenticate(title, subtitle)
+                                    if (success) {
+                                        onToggleBiometrics(targetState)
+                                    }
+                                }
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MoneTrackaColors.CardWhite,
                                 checkedTrackColor = MoneTrackaColors.MintPrimary,

@@ -2,10 +2,13 @@ package com.monetracka.shared.ui.transaction
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import com.monetracka.shared.domain.model.Account
 import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.Transaction
+import com.monetracka.shared.domain.repository.AccountRepository
 import com.monetracka.shared.domain.repository.CategoryRepository
 import com.monetracka.shared.domain.repository.TransactionRepository
+import com.monetracka.shared.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,12 +18,16 @@ import kotlinx.coroutines.launch
 data class TransactionListUiState(
     val transactions: List<Transaction> = emptyList(),
     val categories: Map<Long, Category> = emptyMap(),
+    val accounts: Map<Long, Account> = emptyMap(),
+    val currency: String = "USD",
     val isLoading: Boolean = true,
 )
 
 class TransactionListScreenModel(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
+    private val accountRepository: AccountRepository,
+    private val userProfileRepository: UserProfileRepository,
 ) : ScreenModel {
 
     private val _uiState = MutableStateFlow(TransactionListUiState())
@@ -35,10 +42,14 @@ class TransactionListScreenModel(
             combine(
                 transactionRepository.getAllTransactions(),
                 categoryRepository.getAllCategories(),
-            ) { transactions, categories ->
+                accountRepository.getAllAccounts(),
+                userProfileRepository.getUserProfile(),
+            ) { transactions, categories, accounts, profile ->
                 TransactionListUiState(
                     transactions = transactions,
                     categories = categories.associateBy { it.id },
+                    accounts = accounts.associateBy { it.id },
+                    currency = profile?.currency ?: "USD",
                     isLoading = false,
                 )
             }.collect { state ->

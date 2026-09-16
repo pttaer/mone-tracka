@@ -40,6 +40,7 @@ data class UserProfile(
     val currency: String = "USD",
     val hasCompletedOnboarding: Boolean = false,
     val monthlyBudgetLimit: Double = 2500.0,
+    val isBiometricEnabled: Boolean = false,
 ) {
     val initials: String
         get() = userName.trim().split("\\s+".toRegex())

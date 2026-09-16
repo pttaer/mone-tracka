@@ -33,6 +33,10 @@ class OnboardingFakeUserProfileRepo : UserProfileRepository {
         savedProfile = savedProfile?.copy(currency = currency)
     }
     override suspend fun hasCompletedOnboarding(): Boolean = savedProfile?.hasCompletedOnboarding ?: false
+    override suspend fun updateBiometricEnabled(enabled: Boolean) {
+        savedProfile = savedProfile?.copy(isBiometricEnabled = enabled)
+    }
+    override suspend fun isBiometricEnabled(): Boolean = savedProfile?.isBiometricEnabled ?: false
 }
 
 

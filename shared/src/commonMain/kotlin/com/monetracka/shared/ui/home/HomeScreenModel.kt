@@ -147,6 +147,7 @@ class HomeScreenModel(
                     currency = userProfile?.currency ?: "USD",
                     monthlyBudgetLimit = userProfile?.monthlyBudgetLimit ?: 2500.0,
                     isAdjustBudgetOpen = mutableState.value.isAdjustBudgetOpen,
+                    isBiometricEnabled = userProfile?.isBiometricEnabled ?: false,
                     isLoading = false
                 )
             }.collect { newState ->
@@ -289,6 +290,49 @@ class HomeScreenModel(
                     mutableState.value = mutableState.value.copy(
                         currency = intent.newCurrency
                     )
+                }
+            }
+            HomeIntent.ToggleHideBalance -> {
+                mutableState.value = mutableState.value.copy(
+                    isBalanceHidden = !mutableState.value.isBalanceHidden
+                )
+            }
+            is HomeIntent.OpenAdjustCategoryBudget -> {
+                mutableState.value = mutableState.value.copy(
+                    isAdjustCategoryBudgetOpen = true,
+                    selectedCategoryBudgetSpend = intent.categorySpend
+                )
+            }
+            HomeIntent.DismissAdjustCategoryBudget -> {
+                mutableState.value = mutableState.value.copy(
+                    isAdjustCategoryBudgetOpen = false,
+                    selectedCategoryBudgetSpend = null
+                )
+            }
+            is HomeIntent.UpdateCategoryBudget -> {
+                screenModelScope.launch {
+                    categoryBudgetRepository?.saveBudget(
+                        com.monetracka.shared.domain.model.CategoryBudget(
+                            categoryId = intent.categoryId,
+                            monthlyLimit = intent.newLimit
+                        )
+                    )
+                    mutableState.value = mutableState.value.copy(
+                        isAdjustCategoryBudgetOpen = false,
+                        selectedCategoryBudgetSpend = null
+                    )
+                }
+            }
+            is HomeIntent.ImportTransactions -> {
+                screenModelScope.launch {
+                    intent.transactions.forEach { tx ->
+                        transactionRepository.insertTransaction(tx)
+                    }
+                }
+            }
+            is HomeIntent.SetBiometricEnabled -> {
+                screenModelScope.launch {
+                    userProfileRepository?.updateBiometricEnabled(intent.enabled)
                 }
             }
         }

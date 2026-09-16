@@ -179,7 +179,8 @@ class UserProfileRepositoryImpl(
                 userName = profile.userName,
                 currency = profile.currency,
                 hasCompletedOnboarding = if (profile.hasCompletedOnboarding) 1L else 0L,
-                monthlyBudgetLimit = profile.monthlyBudgetLimit
+                monthlyBudgetLimit = profile.monthlyBudgetLimit,
+                isBiometricEnabled = if (profile.isBiometricEnabled) 1L else 0L
             )
         }
     }
@@ -199,6 +200,17 @@ class UserProfileRepositoryImpl(
     override suspend fun hasCompletedOnboarding(): Boolean = withContext(Dispatchers.IO) {
         val profile = queries.getUserProfile().executeAsOneOrNull()
         profile?.hasCompletedOnboarding == 1L
+    }
+
+    override suspend fun updateBiometricEnabled(enabled: Boolean) {
+        withContext(Dispatchers.IO) {
+            queries.updateBiometricEnabled(if (enabled) 1L else 0L)
+        }
+    }
+
+    override suspend fun isBiometricEnabled(): Boolean = withContext(Dispatchers.IO) {
+        val profile = queries.getUserProfile().executeAsOneOrNull()
+        profile?.isBiometricEnabled == 1L
     }
 }
 
@@ -409,7 +421,8 @@ private fun com.monetracka.db.UserProfileEntity.toDomain() = UserProfile(
     userName = userName,
     currency = currency,
     hasCompletedOnboarding = hasCompletedOnboarding == 1L,
-    monthlyBudgetLimit = monthlyBudgetLimit
+    monthlyBudgetLimit = monthlyBudgetLimit,
+    isBiometricEnabled = isBiometricEnabled == 1L
 )
 
 private fun com.monetracka.db.AccountEntity.toDomain() = Account(

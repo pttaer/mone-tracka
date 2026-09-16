@@ -34,7 +34,7 @@ fun sharedModule(): Module = module {
 
     // Screen Models
     factory { HomeScreenModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    factory { TransactionListScreenModel(get(), get()) }
+    factory { TransactionListScreenModel(get(), get(), get(), get()) }
 
     factory { com.monetracka.shared.ui.onboarding.OnboardingScreenModel(get(), get(), get(), get()) }
 

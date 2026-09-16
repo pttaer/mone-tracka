@@ -27,7 +27,11 @@ class RootScreen : Screen {
         LaunchedEffect(Unit) {
             val hasCompleted = userProfileRepository.hasCompletedOnboarding()
             if (hasCompleted) {
-                navigator.replaceAll(HomeScreen())
+                if (userProfileRepository.isBiometricEnabled()) {
+                    navigator.replaceAll(com.monetracka.shared.ui.security.LockScreen())
+                } else {
+                    navigator.replaceAll(HomeScreen())
+                }
             } else {
                 navigator.replaceAll(OnboardingScreen())
             }

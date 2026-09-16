@@ -3,6 +3,11 @@ package com.monetracka.shared.ui.home.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -25,6 +30,8 @@ fun BalanceHeroCard(
     trendPercent: Double,
     sparklinePoints: List<Float>,
     currency: String = "USD",
+    isBalanceHidden: Boolean = false,
+    onToggleHideBalance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val (intPartWithSymbol, decPart) = remember(balance, currency) {
@@ -52,42 +59,67 @@ fun BalanceHeroCard(
                     letterSpacing = 1.sp,
                     color = Color.White.copy(alpha = 0.75f)
                 )
-                val currencyTag = when (currency) {
-                    "EUR" -> "EUR (€)"
-                    "GBP" -> "GBP (£)"
-                    "VND" -> "VND (₫)"
-                    else -> "USD ($)"
-                }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.20f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = currencyTag,
-                        fontSize = 11.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.20f))
+                            .clickable(onClick = onToggleHideBalance)
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isBalanceHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (isBalanceHidden) "Show Balance" else "Hide Balance",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+
+                    val currencyTag = "$currency (${CurrencyFormatter.symbol(currency)})"
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.20f))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = currencyTag,
+                            fontSize = 11.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
 
             Spacer(Modifier.height(10.dp))
 
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = intPartWithSymbol,
-                    fontSize = 38.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
-                Text(
-                    text = decPart,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.70f)
-                )
+                if (isBalanceHidden) {
+                    Text(
+                        text = "••••••",
+                        fontSize = 38.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                } else {
+                    Text(
+                        text = intPartWithSymbol,
+                        fontSize = 38.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = decPart,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.70f)
+                    )
+                }
             }
 
             Spacer(Modifier.height(10.dp))

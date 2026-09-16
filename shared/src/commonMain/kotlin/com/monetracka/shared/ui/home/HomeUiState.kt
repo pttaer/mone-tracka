@@ -37,12 +37,17 @@ data class HomeUiState(
     val currency: String = "USD",
     val monthlyBudgetLimit: Double = 2500.0,
     val isAdjustBudgetOpen: Boolean = false,
+    val isAdjustCategoryBudgetOpen: Boolean = false,
+    val selectedCategoryBudgetSpend: CategorySpend? = null,
+    val isBalanceHidden: Boolean = false,
+    val isBiometricEnabled: Boolean = false,
     val isLoading: Boolean = false
 )
 
 sealed interface HomeIntent {
     data class OpenAddTransaction(val initialType: TransactionType = TransactionType.EXPENSE) : HomeIntent
     data object DismissAddTransaction : HomeIntent
+    data object ToggleHideBalance : HomeIntent
     data object RefreshQuote : HomeIntent
     data class CreateTransaction(
         val amount: Double,
@@ -65,6 +70,11 @@ sealed interface HomeIntent {
     data class UpdateCurrency(val newCurrency: String) : HomeIntent
     data object OpenAdjustBudget : HomeIntent
     data object DismissAdjustBudget : HomeIntent
+    data class OpenAdjustCategoryBudget(val categorySpend: CategorySpend) : HomeIntent
+    data object DismissAdjustCategoryBudget : HomeIntent
+    data class UpdateCategoryBudget(val categoryId: Long, val newLimit: Double) : HomeIntent
+    data class ImportTransactions(val transactions: List<Transaction>) : HomeIntent
+    data class SetBiometricEnabled(val enabled: Boolean) : HomeIntent
 }
 
 

@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +42,7 @@ fun AccountStrip(
     onInitiateTransfer: (Account, Account) -> Unit,
     onAddAccount: () -> Unit,
     currency: String = "USD",
+    isBalanceHidden: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var draggingAccountId by remember { mutableStateOf<Long?>(null) }
@@ -49,6 +50,96 @@ fun AccountStrip(
     var touchRootPosition by remember { mutableStateOf(Offset.Zero) }
     var hoveredTargetAccountId by remember { mutableStateOf<Long?>(null) }
     val cardBounds = remember { mutableStateMapOf<Long, Rect>() }
+    var selectedAccountForDetails by remember { mutableStateOf<AccountUiModel?>(null) }
+
+    selectedAccountForDetails?.let { accUi ->
+        AlertDialog(
+            onDismissRequest = { selectedAccountForDetails = null },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MoneTrackaColors.SurfaceSecondary)
+                    ) {
+                        Text(accUi.account.emoji, fontSize = 18.sp)
+                    }
+                    Text(
+                        text = accUi.account.name,
+                        color = MoneTrackaColors.TextDark,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Current Balance: ${if (isBalanceHidden) "••••••" else CurrencyFormatter.format(accUi.balance, currency)}",
+                        color = MoneTrackaColors.MintDark,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                    if (accUi.account.description.isNotBlank()) {
+                        Text(
+                            text = accUi.account.description,
+                            color = MoneTrackaColors.TextGray,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    val otherAccounts = accounts.filter { it.account.id != accUi.account.id }
+                    if (otherAccounts.isNotEmpty()) {
+                        Text(
+                            text = "Transfer to another account:",
+                            color = MoneTrackaColors.TextDark,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            otherAccounts.forEach { target ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(MoneTrackaColors.SurfaceSecondary)
+                                        .clickable {
+                                            val source = accUi.account
+                                            selectedAccountForDetails = null
+                                            onInitiateTransfer(source, target.account)
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(target.account.emoji, fontSize = 15.sp)
+                                        Text(target.account.name, color = MoneTrackaColors.TextDark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                    }
+                                    Text("Transfer →", color = MoneTrackaColors.MintDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedAccountForDetails = null }) {
+                    Text("Close", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = MoneTrackaColors.CardWhite
+        )
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -108,6 +199,8 @@ fun AccountStrip(
                     scale = scale,
                     rotation = rotation,
                     currency = currency,
+                    isBalanceHidden = isBalanceHidden,
+                    onClick = { selectedAccountForDetails = item },
                     onPositioned = { rect -> cardBounds[item.account.id] = rect },
                     onDragStart = { startOffset ->
                         draggingAccountId = item.account.id
@@ -195,6 +288,8 @@ private fun AccountCard(
     scale: Float,
     rotation: Float,
     currency: String = "USD",
+    isBalanceHidden: Boolean = false,
+    onClick: () -> Unit,
     onPositioned: (Rect) -> Unit,
     onDragStart: (Offset) -> Unit,
     onDrag: (Offset) -> Unit,
@@ -229,6 +324,7 @@ private fun AccountCard(
                     onDragCancel = { onDragCancel() }
                 )
             }
+            .clickable(onClick = onClick)
             .width(140.dp)
             .height(118.dp)
             .shadow(
@@ -292,7 +388,7 @@ private fun AccountCard(
                     maxLines = 1
                 )
                 Text(
-                    text = CurrencyFormatter.format(item.balance, currency),
+                    text = if (isBalanceHidden) "••••••" else CurrencyFormatter.format(item.balance, currency),
                     color = MoneTrackaColors.TextDark,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,

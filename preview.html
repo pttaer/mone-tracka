@@ -822,6 +822,140 @@
       transform: translateX(-18px);
     }
 
+    /* Dialog Overlay & Popups */
+    .sheet-overlay.center-modal {
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-dialog {
+      background: var(--card-white);
+      border-radius: 24px;
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #FF6B8B, var(--coral-danger));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-danger:active {
+      opacity: 0.85;
+    }
+
+    /* Biometric Shield & Sensor Animation */
+    .bio-shield-glow {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--mint-light);
+      border: 2px solid rgba(0, 208, 156, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: bioPulse 2s infinite ease-in-out;
+    }
+    .bio-shield-core {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: var(--mint-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 208, 156, 0.45);
+    }
+    @keyframes bioPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 208, 156, 0.3); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 14px rgba(0, 208, 156, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 208, 156, 0); }
+    }
+    .bio-prompt-modal {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .bio-sensor-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--mint-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      border: 2px dashed var(--mint-primary);
+      animation: rotateRing 6s linear infinite;
+    }
+    @keyframes rotateRing {
+      100% { transform: rotate(360deg); }
+    }
+
+    .increment-chips {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .inc-chip {
+      flex: 1;
+      padding: 8px 0;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 10px;
+      background: var(--surface-sec);
+      border: 1px solid var(--progress-track);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .inc-chip:hover {
+      background: var(--mint-light);
+      border-color: var(--mint-primary);
+      color: var(--mint-dark);
+    }
+    /* Scanner Beam Viewport */
+    .scanner-viewport {
+      position: relative;
+      height: 180px;
+      background: #0F172A;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      margin-bottom: 16px;
+      border: 2px dashed #38BDF8;
+    }
+    .scanner-beam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #38BDF8, #00D09C, transparent);
+      box-shadow: 0 0 16px #38BDF8;
+      animation: scanAnimation 2s infinite ease-in-out;
+    }
+    @keyframes scanAnimation {
+      0% { top: 10%; opacity: 0.8; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.8; }
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -843,6 +977,7 @@
     <button class="ctrl-btn active" id="btnPhone">📱 Phone Frame</button>
     <button class="ctrl-btn" id="btnExpand">🖥️ Full Canvas</button>
     <button class="ctrl-btn" id="btnQuickAdd">+ Quick Add</button>
+    <button class="ctrl-btn" id="btnTopPrivacy" onclick="toggleHideBalance()" style="background: var(--mint-light); color: var(--mint-dark);">👁️ Privacy Mask</button>
   </div>
 
   <!-- Device Wrapper (Phone Shell) -->
@@ -872,15 +1007,20 @@
                 <h2 id="userNameDisplay">John Doe</h2>
               </div>
             </div>
-            <div class="bell-btn" onclick="alert('Notification Center: Budget alert: 61.6% consumed. All systems optimal!')">
+            <div class="bell-btn" id="bellBtn" onclick="openNotificationCenter()" title="Notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1F36" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-              <div class="bell-dot"></div>
+              <div class="bell-dot" id="bellDot"></div>
             </div>
           </div>
 
           <!-- Balance Hero Card -->
           <div class="balance-card">
-            <div class="balance-label">NET BALANCE</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+              <div class="balance-label">NET BALANCE • <span id="heroCurrencyTag" style="opacity: 0.88; font-size: 11px;">USD ($)</span></div>
+              <button id="btnTogglePrivacy" onclick="toggleHideBalance()" style="background: rgba(255,255,255,0.22); border: none; border-radius: 8px; width: 32px; height: 32px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: transform 0.15s;" title="Toggle Privacy Mask">
+                <span id="privacyEyeIcon">👁️</span>
+              </button>
+            </div>
             <div class="balance-amount" id="heroBalance">$12,450.80</div>
             <div class="trend-badge">
               <span>▲ +18.4%</span> this month
@@ -900,22 +1040,22 @@
 
           <!-- Accounts Carousel -->
           <div class="accounts-strip">
-            <div class="account-chip" onclick="openTransferModal('Checking Account', 'Main Savings')">
+            <div class="account-chip" onclick="inspectAccount('Checking Account', state.checking, '💳')">
               <div class="icon">💳</div>
               <div class="name">Checking</div>
               <div class="amt" id="accChecking">$5,240.00</div>
             </div>
-            <div class="account-chip" onclick="openTransferModal('Main Savings', 'Checking Account')">
+            <div class="account-chip" onclick="inspectAccount('Main Savings', state.savings, '🏦')">
               <div class="icon">🏦</div>
               <div class="name">Main Savings</div>
               <div class="amt" id="accSavings">$6,810.80</div>
             </div>
-            <div class="account-chip" onclick="openTransferModal('Cash Wallet', 'Checking Account')">
+            <div class="account-chip" onclick="inspectAccount('Cash Wallet', 400.00, '💵')">
               <div class="icon">💵</div>
               <div class="name">Cash Wallet</div>
-              <div class="amt">$400.00</div>
+              <div class="amt" id="accCash">$400.00</div>
             </div>
-            <div class="account-chip" onclick="alert('Add Account dialog')">
+            <div class="account-chip" onclick="openAddAccountModal()">
               <div class="icon">➕</div>
               <div class="name">New Account</div>
               <div class="amt" style="color: var(--mint-dark)">Create</div>
@@ -943,28 +1083,86 @@
           <!-- Quick Action Bar -->
           <div class="quick-actions">
             <div class="qa-btn" onclick="openAddModal('EXPENSE')">
-              <div class="qa-icon" style="background: var(--coral-light); color: var(--coral-danger)">💸</div>
+              <div class="qa-icon" style="background: var(--coral-light); color: var(--coral-danger)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
               <div class="qa-label">Expense</div>
             </div>
             <div class="qa-btn" onclick="openAddModal('INCOME')">
-              <div class="qa-icon" style="background: var(--mint-light); color: var(--mint-dark)">💰</div>
+              <div class="qa-icon" style="background: var(--mint-light); color: var(--mint-dark)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </div>
               <div class="qa-label">Income</div>
             </div>
-            <div class="qa-btn" onclick="openTransferModal('Checking Account', 'Main Savings')">
-              <div class="qa-icon" style="background: #EFF6FF; color: #2563EB">🔁</div>
-              <div class="qa-label">Transfer</div>
+            <div class="qa-btn" onclick="openOcrScanner()">
+              <div class="qa-icon" style="background: #EFF6FF; color: #2563EB">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+              </div>
+              <div class="qa-label">Scan Bill</div>
             </div>
-            <div class="qa-btn" onclick="switchTab(1)">
-              <div class="qa-icon" style="background: #F3E8FF; color: #9333EA">📊</div>
-              <div class="qa-label">Insights</div>
+            <div class="qa-btn" onclick="openMoreActions()">
+              <div class="qa-icon" style="background: #F3E8FF; color: #9333EA">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+              </div>
+              <div class="qa-label">More</div>
             </div>
           </div>
 
-          <!-- Recent Transactions -->
+          <!-- Recent Transactions Header with Reset Filters -->
           <div class="section-header">
-            <div class="section-title">Recent Transactions</div>
-            <div class="section-link" onclick="switchTab(1)">See Breakdown →</div>
+            <div class="section-title">Transactions</div>
+            <div class="section-link" onclick="resetTxFilters()">Reset Filters</div>
           </div>
+
+          <!-- Running Totals Summary Card -->
+          <div class="card" style="padding: 12px 14px; margin-bottom: 12px; background: #F8FAFC; border: 1px solid #E2E8F0;">
+            <div style="display: flex; justify-content: space-between; text-align: center;">
+              <div>
+                <div style="font-size: 10px; font-weight: 700; color: var(--text-gray);">TOTAL IN</div>
+                <div id="summaryTotalIn" style="font-size: 13px; font-weight: 800; color: var(--mint-dark);">+$1,200.00</div>
+              </div>
+              <div style="width: 1px; background: var(--progress-track);"></div>
+              <div>
+                <div style="font-size: 10px; font-weight: 700; color: var(--text-gray);">TOTAL OUT</div>
+                <div id="summaryTotalOut" style="font-size: 13px; font-weight: 800; color: var(--coral-danger);">-$127.18</div>
+              </div>
+              <div style="width: 1px; background: var(--progress-track);"></div>
+              <div>
+                <div style="font-size: 10px; font-weight: 700; color: var(--text-gray);">NET FLOW</div>
+                <div id="summaryNetFlow" style="font-size: 13px; font-weight: 800; color: var(--text-dark);">+$1,072.82</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search & 4-Way Sort Controls -->
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <input type="text" id="txSearchInput" class="form-input" style="padding: 8px 12px; font-size: 12px; border-radius: 10px; margin: 0; flex: 1;" placeholder="Search note, category, account..." oninput="handleTxSearch(this.value)">
+            <select id="txSortSelect" class="form-input" style="width: auto; padding: 8px 10px; font-size: 12px; border-radius: 10px; margin: 0; background: white; cursor: pointer;" onchange="handleTxSort(this.value)">
+              <option value="NEWEST">Newest</option>
+              <option value="OLDEST">Oldest</option>
+              <option value="HIGHEST">Highest $</option>
+              <option value="LOWEST">Lowest $</option>
+            </select>
+          </div>
+
+          <!-- Type Filter Tabs -->
+          <div class="type-toggle" style="margin-bottom: 10px; padding: 3px;">
+            <button class="active" id="btnFilterAll" onclick="setFilterType('ALL')" style="padding: 6px; font-size: 11px;">All</button>
+            <button id="btnFilterExpense" onclick="setFilterType('EXPENSE')" style="padding: 6px; font-size: 11px;">Expense</button>
+            <button id="btnFilterIncome" onclick="setFilterType('INCOME')" style="padding: 6px; font-size: 11px;">Income</button>
+            <button id="btnFilterTransfer" onclick="setFilterType('TRANSFER')" style="padding: 6px; font-size: 11px;">Transfer</button>
+          </div>
+
+          <!-- Horizontal Category Filter Strip -->
+          <div class="accounts-strip" id="catFilterStrip" style="margin-bottom: 12px; padding-bottom: 2px;">
+            <div class="cat-pill selected" onclick="filterByCat(this, 'ALL')" style="font-size: 11px; padding: 5px 12px;">All Categories</div>
+            <div class="cat-pill" onclick="filterByCat(this, 'Food')" style="font-size: 11px; padding: 5px 12px;">🍔 Dining</div>
+            <div class="cat-pill" onclick="filterByCat(this, 'Shopping')" style="font-size: 11px; padding: 5px 12px;">🛍️ Shopping</div>
+            <div class="cat-pill" onclick="filterByCat(this, 'Transport')" style="font-size: 11px; padding: 5px 12px;">🚗 Transport</div>
+            <div class="cat-pill" onclick="filterByCat(this, 'Utilities')" style="font-size: 11px; padding: 5px 12px;">💡 Utilities</div>
+            <div class="cat-pill" onclick="filterByCat(this, 'Salary')" style="font-size: 11px; padding: 5px 12px;">💼 Salary</div>
+          </div>
+
           <div id="txListContainer"></div>
         </div>
 
@@ -1062,33 +1260,8 @@
           </div>
 
           <!-- Category Budget Limits -->
-          <div class="section-title" style="margin: 16px 0 10px 0;">Category Budgets</div>
-          <div class="card" style="padding: 14px; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
-              <span>🍔 Food & Dining</span>
-              <span style="color: var(--coral-danger);">$647.50 / $700.00</span>
-            </div>
-            <div class="budget-meter" style="margin: 8px 0;"><div class="budget-fill" style="width: 92%; background: var(--coral-danger);"></div></div>
-            <div style="font-size: 11px; color: var(--coral-danger); font-weight: 700;">⚠️ Approaching 92% limit</div>
-          </div>
-
-          <div class="card" style="padding: 14px; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
-              <span>🛍️ Shopping</span>
-              <span style="color: var(--mint-dark);">$462.50 / $800.00</span>
-            </div>
-            <div class="budget-meter" style="margin: 8px 0;"><div class="budget-fill" style="width: 57%; background: var(--mint-primary);"></div></div>
-            <div style="font-size: 11px; color: var(--text-gray);">57% used ($337.50 left)</div>
-          </div>
-
-          <div class="card" style="padding: 14px; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
-              <span>🚗 Transport</span>
-              <span style="color: var(--mint-dark);">$370.00 / $500.00</span>
-            </div>
-            <div class="budget-meter" style="margin: 8px 0;"><div class="budget-fill" style="width: 74%; background: var(--cyan-accent);"></div></div>
-            <div style="font-size: 11px; color: var(--text-gray);">74% used ($130.00 left)</div>
-          </div>
+          <div class="section-title" style="margin: 16px 0 10px 0;">Category Budgets (Tap to Adjust Limit)</div>
+          <div id="categoryBudgetsContainer"></div>
         </div>
 
         <!-- ── TAB 3: SETTINGS ── -->
@@ -1125,8 +1298,8 @@
             <div style="font-size: 14px; font-weight: 800; margin-bottom: 6px;">Data & Backups</div>
             <p style="font-size: 12px; color: var(--text-gray); margin-bottom: 12px;">Export or restore your transaction database in CSV format.</p>
             <div style="display: flex; gap: 10px;">
-              <button class="btn-submit" style="padding: 10px; font-size: 13px;" onclick="exportCsv()">📥 Export CSV</button>
-              <button class="ctrl-btn" style="flex: 1; padding: 10px; font-size: 13px;" onclick="alert('Import feature ready for JSON / CSV')">📤 Import</button>
+              <button class="btn-submit" style="padding: 10px; font-size: 13px;" onclick="openExportModal()">📥 Export CSV</button>
+              <button class="ctrl-btn" style="flex: 1; padding: 10px; font-size: 13px;" onclick="openImportModal()">📤 Import Data</button>
             </div>
           </div>
 
@@ -1134,10 +1307,13 @@
             <div class="settings-row">
               <div>
                 <div style="font-size: 14px; font-weight: 700;">Biometric App Lock</div>
-                <div style="font-size: 11px; color: var(--text-gray);">Require Face ID / Fingerprint</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Require Face ID / Fingerprint to open</div>
               </div>
               <div class="toggle-switch" id="bioToggle" onclick="toggleBiometrics()"></div>
             </div>
+            <button class="ctrl-btn" style="width: 100%; margin-top: 10px; font-size: 12px; padding: 9px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="triggerLockScreen()">
+              <span>🔒</span> <span>Lock App Now (Simulate Cold Start)</span>
+            </button>
           </div>
         </div>
 
@@ -1183,9 +1359,25 @@
             <button id="btnTypeIncome" onclick="setType('INCOME')">Income</button>
           </div>
 
+          <!-- Multi-Account Selection Strip -->
           <div class="form-group">
-            <label>Amount ($)</label>
-            <input type="number" step="0.01" class="form-input" id="inputAmount" placeholder="0.00" autofocus>
+            <label>Destination Account</label>
+            <div class="category-pills" id="accPills">
+              <div class="cat-pill selected" onclick="selectAccChip(this, 'Checking')">💳 Checking</div>
+              <div class="cat-pill" onclick="selectAccChip(this, 'Main Savings')">🏦 Main Savings</div>
+              <div class="cat-pill" onclick="selectAccChip(this, 'Cash Wallet')">💵 Cash Wallet</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label id="amountLabel">Amount ($)</label>
+            <input type="text" inputmode="decimal" class="form-input" id="inputAmount" placeholder="0.00" oninput="sanitizeAmountInput(this)" onkeydown="handleAmountKeydown(event)" autofocus>
+            <div class="increment-chips" id="incChips">
+              <div class="inc-chip" onclick="addAmount(10)">+10</div>
+              <div class="inc-chip" onclick="addAmount(25)">+25</div>
+              <div class="inc-chip" onclick="addAmount(50)">+50</div>
+              <div class="inc-chip" onclick="addAmount(100)">+100</div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -1201,11 +1393,61 @@
 
           <div class="form-group">
             <label>Note / Payee</label>
-            <input type="text" class="form-input" id="inputNote" placeholder="e.g. Blue Bottle Coffee">
+            <input type="text" class="form-input" id="inputNote" placeholder="e.g. Blue Bottle Coffee" onkeydown="handleNoteKeydown(event)">
           </div>
 
           <button class="btn-submit" onclick="submitTransaction()">Save Transaction</button>
           <button class="ctrl-btn" style="width: 100%; margin-top: 8px;" onclick="closeModal('sheetAdd')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: TRANSACTION DETAIL ── -->
+      <div class="sheet-overlay" id="sheetTxDetail">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+            <div>
+              <span id="txDetailTypeBadge" style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">Expense</span>
+              <div id="txDetailAmount" style="font-size: 28px; font-weight: 800; margin-top: 6px; color: var(--text-dark);">$0.00</div>
+            </div>
+            <div id="txDetailEmojiBox" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--surface-sec);">☕</div>
+          </div>
+
+          <div class="card" style="padding: 14px; background: var(--surface-sec); border: none; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+              <span style="color: var(--text-gray);">Category</span>
+              <span id="txDetailCat" style="font-weight: 700; color: var(--text-dark);">Food & Dining</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+              <span style="color: var(--text-gray);">Account</span>
+              <span id="txDetailAccount" style="font-weight: 700; color: var(--text-dark);">Checking Account</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+              <span style="color: var(--text-gray);">Note / Payee</span>
+              <span id="txDetailNote" style="font-weight: 700; color: var(--text-dark);">Starbucks</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: var(--text-gray);">Timestamp</span>
+              <span id="txDetailDate" style="font-weight: 700; color: var(--text-dark);">Today at 10:42 AM</span>
+            </div>
+          </div>
+
+          <button class="btn-submit" style="background: var(--coral-danger); box-shadow: 0 4px 14px rgba(255, 90, 121, 0.3);" onclick="confirmDeleteFromDetail()">Delete Transaction</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px; padding: 12px;" onclick="closeModal('sheetTxDetail')">Close</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: ADJUST CATEGORY BUDGET ── -->
+      <div class="sheet-overlay" id="sheetCatBudget">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title" id="catBudgetModalTitle">Adjust Category Budget</div>
+          <div class="form-group">
+            <label id="catBudgetModalLabel">Monthly Target Limit ($)</label>
+            <input type="number" class="form-input" id="catBudgetLimitInput" value="700">
+          </div>
+          <button class="btn-submit" onclick="saveCatBudget()">Save Category Budget</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px;" onclick="closeModal('sheetCatBudget')">Cancel</button>
         </div>
       </div>
 
@@ -1264,6 +1506,275 @@
         </div>
       </div>
 
+      <!-- ── MODAL: DELETE TRANSACTION CONFIRMATION ── -->
+      <div class="sheet-overlay center-modal" id="sheetDeleteConfirm">
+        <div class="modal-dialog">
+          <div style="font-size: 36px; text-align: center; margin-bottom: 8px;">🗑️</div>
+          <div style="font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 6px; color: var(--text-dark);">Delete Transaction?</div>
+          <p style="font-size: 13px; color: var(--text-gray); line-height: 1.45; text-align: center; margin-bottom: 20px;" id="delConfirmDesc">
+            Are you sure you want to delete this transaction? This action cannot be undone.
+          </p>
+          <div style="display: flex; gap: 10px;">
+            <button class="ctrl-btn" style="flex: 1; padding: 12px; font-size: 14px;" onclick="closeModal('sheetDeleteConfirm')">Cancel</button>
+            <button class="btn-danger" style="flex: 1; padding: 12px; font-size: 14px;" onclick="confirmDeleteTx()">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: NOTIFICATION CENTER ── -->
+      <div class="sheet-overlay" id="sheetNotifications">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="sheet-title" style="margin-bottom: 0;">Notification Center</div>
+            <button class="ctrl-btn" style="font-size: 11px; padding: 4px 10px;" onclick="clearNotifications()">Clear All</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="card" style="margin: 0; padding: 14px; border-left: 4px solid var(--amber-warning); background: #FFFDF7;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 12px; font-weight: 800; color: #B45309;">⚠️ Budget Velocity Alert</span>
+                <span style="font-size: 10px; color: var(--text-gray);">10m ago</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-dark); line-height: 1.4;">
+                Dining & Food is currently at <strong>61.6%</strong> of monthly allocation ($1,850 / $3,000). Consider capping weekend delivery.
+              </p>
+            </div>
+
+            <div class="card" style="margin: 0; padding: 14px; border-left: 4px solid var(--mint-primary); background: #F6FEFB;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 12px; font-weight: 800; color: var(--mint-dark);">💡 Smart Coach Tip</span>
+                <span style="font-size: 10px; color: var(--text-gray);">2h ago</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-dark); line-height: 1.4;">
+                High savings rate this cycle! You're on track to retain +18.4% more liquidity than the previous 30 days.
+              </p>
+            </div>
+
+            <div class="card" style="margin: 0; padding: 14px; border-left: 4px solid var(--cyan-accent); background: #F0F9FF;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 12px; font-weight: 800; color: #0369A1;">🔄 Recurring Audit</span>
+                <span style="font-size: 10px; color: var(--text-gray);">Yesterday</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-dark); line-height: 1.4;">
+                Detected monthly subscriptions totaling $29.98 (Netflix, Spotify). No double charges detected.
+              </p>
+            </div>
+          </div>
+
+          <button class="ctrl-btn" style="width: 100%; margin-top: 16px; padding: 12px;" onclick="closeModal('sheetNotifications')">Close</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: OCR BILL SCANNER ── -->
+      <div class="sheet-overlay" id="sheetOcrScanner">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">🧾 Smart Bill Scanner (OCR)</div>
+
+          <div class="scanner-viewport">
+            <div class="scanner-beam"></div>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <div style="font-size: 13px; font-weight: 700; margin-top: 8px; color: #E2E8F0;">Align Receipt Inside Viewport</div>
+            <div style="font-size: 11px; color: #94A3B8;">Auto-detecting merchant, date & total</div>
+          </div>
+
+          <!-- Detected Result Box -->
+          <div class="card" style="background: var(--mint-light); border: 1px solid rgba(0,208,156,0.3); padding: 14px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: var(--mint-dark); text-transform: uppercase;">Confidence: 98.4%</span>
+              <span style="font-size: 12px; font-weight: 800; color: var(--mint-dark);" id="ocrDetectedAmt">$48.50</span>
+            </div>
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-dark);">Whole Foods Market</div>
+            <div style="font-size: 12px; color: var(--text-gray);">Category: 🍔 Food & Dining • Today, 10:14 AM</div>
+          </div>
+
+          <button class="btn-submit" onclick="applyScannedBill()">✓ Import to Expense ($48.50)</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px; padding: 12px;" onclick="closeModal('sheetOcrScanner')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: MORE ACTIONS ── -->
+      <div class="sheet-overlay" id="sheetMoreActions">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">More Quick Actions</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="card" style="padding: 14px; margin: 0; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="closeModal('sheetMoreActions'); openTransferModal('Checking Account', 'Main Savings');">
+              <span style="font-size: 20px;">🔁</span>
+              <div style="flex: 1;">
+                <div style="font-size: 14px; font-weight: 700;">Transfer Funds</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Move balance between your accounts</div>
+              </div>
+              <span style="color: var(--text-light);">→</span>
+            </div>
+            <div class="card" style="padding: 14px; margin: 0; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="closeModal('sheetMoreActions'); openAdjustBudgetModal();">
+              <span style="font-size: 20px;">🎯</span>
+              <div style="flex: 1;">
+                <div style="font-size: 14px; font-weight: 700;">Adjust Budget Target</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Tune monthly spending threshold</div>
+              </div>
+              <span style="color: var(--text-light);">→</span>
+            </div>
+            <div class="card" style="padding: 14px; margin: 0; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="closeModal('sheetMoreActions'); openCurrencyModal();">
+              <span style="font-size: 20px;">💱</span>
+              <div style="flex: 1;">
+                <div style="font-size: 14px; font-weight: 700;">Change Currency</div>
+                <div style="font-size: 11px; color: var(--text-gray);">USD, EUR, GBP, VND, JPY</div>
+              </div>
+              <span style="color: var(--text-light);">→</span>
+            </div>
+            <div class="card" style="padding: 14px; margin: 0; display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="closeModal('sheetMoreActions'); switchTab(1);">
+              <span style="font-size: 20px;">📊</span>
+              <div style="flex: 1;">
+                <div style="font-size: 14px; font-weight: 700;">Deep Analytics</div>
+                <div style="font-size: 11px; color: var(--text-gray);">Breakdown category spending and burn</div>
+              </div>
+              <span style="color: var(--text-light);">→</span>
+            </div>
+          </div>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 14px; padding: 12px;" onclick="closeModal('sheetMoreActions')">Close</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: EXPORT CSV PREVIEW ── -->
+      <div class="sheet-overlay" id="sheetExportCsv">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">📥 Export Transactions CSV</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--mint-dark); background: var(--mint-light); padding: 4px 8px; border-radius: 6px;" id="exportCount">5 Transactions Ready</span>
+            <span style="font-size: 11px; color: var(--text-gray);">Format: RFC 4180 CSV</span>
+          </div>
+          <textarea id="csvPreviewBox" readonly style="width: 100%; height: 140px; font-family: monospace; font-size: 11px; padding: 10px; border-radius: 10px; border: 1px solid var(--progress-track); background: var(--surface-sec); resize: none; margin-bottom: 12px;"></textarea>
+          <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+            <button class="ctrl-btn" id="btnCopyCsv" style="flex: 1; padding: 12px;" onclick="copyCsvClipboard()">📋 Copy to Clipboard</button>
+            <button class="btn-submit" style="flex: 1; padding: 12px;" onclick="downloadCsvFile()">💾 Download File</button>
+          </div>
+          <button class="ctrl-btn" style="width: 100%; padding: 10px;" onclick="closeModal('sheetExportCsv')">Close</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: IMPORT DATA ── -->
+      <div class="sheet-overlay" id="sheetImportCsv">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">📤 Import CSV Transactions</div>
+          <div style="font-size: 12px; color: var(--text-gray); margin-bottom: 8px;" id="importStatusMsg">
+            Paste raw CSV text below (schema: id, note, category, amount, type, currency):
+          </div>
+          <textarea id="csvImportInput" placeholder="id,note,category,amount,type,currency&#10;101,&quot;Gym Membership&quot;,&quot;💡 Utilities&quot;,45.00,EXPENSE,USD" style="width: 100%; height: 130px; font-family: monospace; font-size: 11px; padding: 10px; border-radius: 10px; border: 1px solid var(--progress-track); background: var(--surface-sec); resize: none; margin-bottom: 10px;"></textarea>
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <button class="ctrl-btn" style="font-size: 11px; padding: 6px 10px;" onclick="pasteSampleCsv()">Insert Sample CSV</button>
+            <button class="ctrl-btn" style="font-size: 11px; padding: 6px 10px;" onclick="validateCsvOnly()">Verify Rows</button>
+          </div>
+          <button class="btn-submit" onclick="processCsvImport()">Merge & Import Data</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="closeModal('sheetImportCsv')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: ACCOUNT INSPECTION ── -->
+      <div class="sheet-overlay" id="sheetAccountDetail">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--surface-sec); display: flex; align-items: center; justify-content: center; font-size: 24px;" id="accModalIcon">💳</div>
+            <div>
+              <div style="font-size: 18px; font-weight: 800; color: var(--text-dark);" id="accModalName">Checking Account</div>
+              <div style="font-size: 12px; color: var(--text-gray);">Primary Liquidity • Active</div>
+            </div>
+          </div>
+
+          <div class="card" style="background: var(--surface-sec); padding: 16px; margin-bottom: 16px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-gray); text-transform: uppercase;">Current Available Balance</div>
+            <div style="font-size: 26px; font-weight: 800; color: var(--mint-dark); margin-top: 4px;" id="accModalBal">$5,240.00</div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button class="btn-submit" style="padding: 12px;" onclick="quickTransferFromAccount()">🔁 Quick Transfer</button>
+          </div>
+          <button class="ctrl-btn" style="width: 100%; padding: 12px;" onclick="closeModal('sheetAccountDetail')">Close</button>
+        </div>
+      </div>
+
+      <!-- ── BOTTOM SHEET: CREATE NEW ACCOUNT ── -->
+      <div class="sheet-overlay" id="sheetNewAccount">
+        <div class="sheet-body">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">Create New Account</div>
+          <div class="form-group">
+            <label>Account Name</label>
+            <input type="text" class="form-input" id="newAccName" placeholder="e.g. Travel Fund">
+          </div>
+          <div class="form-group">
+            <label>Initial Balance</label>
+            <input type="number" step="0.01" class="form-input" id="newAccBalance" placeholder="0.00">
+          </div>
+          <button class="btn-submit" onclick="submitNewAccount()">Create Account</button>
+          <button class="ctrl-btn" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="closeModal('sheetNewAccount')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── MODAL: BIOMETRIC AUTH CONFIRMATION PROMPT ── -->
+      <div class="sheet-overlay center-modal" id="sheetBioAuthPrompt">
+        <div class="modal-dialog bio-prompt-modal">
+          <div class="bio-sensor-ring">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--mint-primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+              <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
+              <path d="M2 16h.01"/>
+              <path d="M21.8 16c.2-2 .131-5.354 0-6"/>
+              <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"/>
+              <path d="M4.65 14.5a10.87 10.87 0 0 1-.65-2.5 8 8 0 0 1 15.34-3.2"/>
+              <path d="M12 2a10 10 0 0 0-9.9 8.2"/>
+            </svg>
+          </div>
+          <div style="font-size: 17px; font-weight: 800; margin-bottom: 6px; color: var(--text-dark);" id="bioPromptTitle">Confirm Biometrics</div>
+          <p style="font-size: 13px; color: var(--text-gray); line-height: 1.45; margin-bottom: 20px;" id="bioPromptSubtitle">
+            Touch fingerprint sensor or look at screen to proceed.
+          </p>
+          <div style="display: flex; gap: 10px; width: 100%;">
+            <button class="ctrl-btn" style="flex: 1; padding: 12px; font-size: 14px;" onclick="closeModal('sheetBioAuthPrompt')">Cancel</button>
+            <button class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px;" onclick="confirmBiometricPrompt()">Authenticate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SCREEN OVERLAY: BIOMETRIC LOCK SCREEN (Cold Start Shield) ── -->
+      <div id="lockScreenOverlay" style="display: none; position: absolute; inset: 0; z-index: 9999; background: var(--bg-light); flex-direction: column; align-items: center; justify-content: center; padding: 28px; border-radius: 44px;">
+        <div class="bio-shield-glow" id="bioShieldGlow">
+          <div class="bio-shield-core">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; display: inline-flex; align-items: center; gap: 8px; background: #fff; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--progress-track); box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--mint-primary); color: #051A12; font-weight: 800; font-size: 10px; display: flex; align-items: center; justify-content: center;">TP</div>
+          <span style="font-size: 13px; font-weight: 700; color: var(--text-dark);">Thanh Pham</span>
+        </div>
+
+        <div style="font-size: 22px; font-weight: 800; color: var(--text-dark); margin-top: 14px; text-align: center;">MoneTracka is Locked</div>
+        <div style="font-size: 12px; color: var(--text-gray); margin-top: 6px; text-align: center; max-width: 260px; line-height: 1.45;" id="lockSubDesc">
+          Biometric security is active to protect your financial records.
+        </div>
+
+        <button class="btn-submit" id="bioUnlockBtn" style="margin-top: 32px; width: 100%; max-width: 280px; height: 50px; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,208,156,0.35);" onclick="simulateBiometricUnlock()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+            <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
+            <path d="M2 16h.01"/>
+            <path d="M21.8 16c.2-2 .131-5.354 0-6"/>
+            <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"/>
+            <path d="M4.65 14.5a10.87 10.87 0 0 1-.65-2.5 8 8 0 0 1 15.34-3.2"/>
+            <path d="M12 2a10 10 0 0 0-9.9 8.2"/>
+          </svg>
+          <span id="bioUnlockBtnText">Unlock with Biometrics</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -1272,20 +1783,33 @@
     const state = {
       currency: 'USD',
       symbol: '$',
+      isBalanceHidden: false,
       totalBalance: 12450.80,
       checking: 5240.00,
       savings: 6810.80,
+      cash: 400.00,
       budgetLimit: 3000.00,
       totalSpent: 1850.00,
       selectedType: 'EXPENSE',
       selectedCategory: '🍔 Food & Dining',
+      selectedAccount: 'Checking',
+      sortOption: 'NEWEST',
+      searchQuery: '',
+      filterType: 'ALL',
+      filterCategory: 'ALL',
       biometricsEnabled: true,
+      categoryBudgets: {
+        '🍔 Food & Dining': 700.00,
+        '🛍️ Shopping': 800.00,
+        '🚗 Transport': 500.00,
+        '💡 Utilities': 300.00
+      },
       transactions: [
-        { id: 1, note: 'Starbucks Roast & Croissant', cat: '🍔 Food & Dining', emoji: '☕', amt: 8.50, type: 'EXPENSE' },
-        { id: 2, note: 'Trader Joe\'s Groceries', cat: '🍔 Food & Dining', emoji: '🥗', amt: 64.20, type: 'EXPENSE' },
-        { id: 3, note: 'Uber Ride Downtown', cat: '🚗 Transport', emoji: '🚗', amt: 24.50, type: 'EXPENSE' },
-        { id: 4, note: 'Freelance Design Retainer', cat: '💼 Salary', emoji: '💰', amt: 1200.00, type: 'INCOME' },
-        { id: 5, note: 'Netflix & Spotify Subs', cat: '💡 Utilities', emoji: '📺', amt: 29.98, type: 'EXPENSE' }
+        { id: 1, note: 'Starbucks Roast & Croissant', cat: '🍔 Food & Dining', account: 'Checking', emoji: '☕', amt: 8.50, type: 'EXPENSE', date: 'Today at 10:42 AM' },
+        { id: 2, note: 'Trader Joe\'s Groceries', cat: '🍔 Food & Dining', account: 'Checking', emoji: '🥗', amt: 64.20, type: 'EXPENSE', date: 'Yesterday at 4:15 PM' },
+        { id: 3, note: 'Uber Ride Downtown', cat: '🚗 Transport', account: 'Checking', emoji: '🚗', amt: 24.50, type: 'EXPENSE', date: 'Sep 14, 2026' },
+        { id: 4, note: 'Freelance Design Retainer', cat: '💼 Salary', account: 'Main Savings', emoji: '💰', amt: 1200.00, type: 'INCOME', date: 'Sep 12, 2026' },
+        { id: 5, note: 'Netflix & Spotify Subs', cat: '💡 Utilities', account: 'Checking', emoji: '📺', amt: 29.98, type: 'EXPENSE', date: 'Sep 10, 2026' }
       ],
       quotes: [
         { q: "Do not save what is left after spending, but spend what is left after saving.", a: "Warren Buffett" },
@@ -1299,61 +1823,252 @@
 
     function renderTransactions() {
       const container = document.getElementById('txListContainer');
+      if (!container) return;
       container.innerHTML = '';
-      state.transactions.forEach(tx => {
+
+      // Filter by Type, Category, and Search
+      let list = state.transactions.filter(tx => {
+        if (state.filterType !== 'ALL' && tx.type !== state.filterType) return false;
+        if (state.filterCategory !== 'ALL' && !tx.cat.toLowerCase().includes(state.filterCategory.toLowerCase())) return false;
+        if (state.searchQuery) {
+          const q = state.searchQuery.toLowerCase();
+          const matchNote = tx.note.toLowerCase().includes(q);
+          const matchCat = tx.cat.toLowerCase().includes(q);
+          const matchAcc = (tx.account || '').toLowerCase().includes(q);
+          if (!matchNote && !matchCat && !matchAcc) return false;
+        }
+        return true;
+      });
+
+      // 4-Way Sort
+      list.sort((a, b) => {
+        if (state.sortOption === 'NEWEST') return b.id - a.id;
+        if (state.sortOption === 'OLDEST') return a.id - b.id;
+        if (state.sortOption === 'HIGHEST') return b.amt - a.amt;
+        if (state.sortOption === 'LOWEST') return a.amt - b.amt;
+        return 0;
+      });
+
+      // Update Running Totals
+      let totalIn = 0;
+      let totalOut = 0;
+      list.forEach(tx => {
+        if (tx.type === 'INCOME') totalIn += tx.amt;
+        else if (tx.type === 'EXPENSE') totalOut += tx.amt;
+      });
+      const netFlow = totalIn - totalOut;
+
+      const inEl = document.getElementById('summaryTotalIn');
+      const outEl = document.getElementById('summaryTotalOut');
+      const netEl = document.getElementById('summaryNetFlow');
+      if (inEl) inEl.innerText = `+${state.symbol}${totalIn.toFixed(2)}`;
+      if (outEl) outEl.innerText = `-${state.symbol}${totalOut.toFixed(2)}`;
+      if (netEl) {
+        netEl.innerText = `${netFlow >= 0 ? '+' : '-'}${state.symbol}${Math.abs(netFlow).toFixed(2)}`;
+        netEl.style.color = netFlow >= 0 ? 'var(--mint-dark)' : 'var(--coral-danger)';
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 28px 16px; background: white; border-radius: 16px; border: 1px dashed var(--progress-track); margin-bottom: 12px;">
+            <div style="font-size: 26px; margin-bottom: 6px;">🔍</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-dark);">No Transactions Found</div>
+            <div style="font-size: 11px; color: var(--text-gray); margin-top: 4px;">No matching transactions for current filters.</div>
+            <button class="ctrl-btn" style="margin-top: 10px; background: var(--mint-light); color: var(--mint-dark); font-size: 11px;" onclick="resetTxFilters()">Reset Filters</button>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(tx => {
         const isExp = tx.type === 'EXPENSE';
-        const color = isExp ? 'var(--coral-danger)' : 'var(--mint-dark)';
-        const prefix = isExp ? '-' : '+';
-        const bg = isExp ? 'var(--coral-light)' : 'var(--mint-light)';
+        const isInc = tx.type === 'INCOME';
+        const color = isExp ? 'var(--coral-danger)' : (isInc ? 'var(--mint-dark)' : 'var(--cyan-accent)');
+        const prefix = isExp ? '-' : (isInc ? '+' : '🔁 ');
+        const bg = isExp ? 'var(--coral-light)' : (isInc ? 'var(--mint-light)' : '#E0F7FA');
 
         const div = document.createElement('div');
         div.className = 'tx-row';
+        div.style.cursor = 'pointer';
+        div.onclick = () => openTxDetail(tx.id);
         div.innerHTML = `
           <div class="tx-left">
             <div class="tx-icon-box" style="background: ${bg}">${tx.emoji}</div>
             <div>
               <div class="tx-title">${tx.note}</div>
-              <div class="tx-category">${tx.cat}</div>
+              <div class="tx-category">${tx.cat} • <span style="color: var(--text-light); font-weight: 500;">${tx.account || 'Checking'}</span></div>
             </div>
           </div>
           <div class="tx-right">
             <div>
-              <div class="tx-amount" style="color: ${color}">${prefix}${state.symbol}${tx.amt.toFixed(2)}</div>
+              <div class="tx-amount" style="color: ${color}">
+                ${state.isBalanceHidden ? '••••••' : prefix + state.symbol + tx.amt.toFixed(2)}
+              </div>
               <div class="tx-currency">${state.currency}</div>
             </div>
-            <button class="tx-del-btn" onclick="deleteTx(${tx.id})" title="Delete">✕</button>
+            <span style="font-size: 14px; color: var(--text-light); margin-left: 4px;">›</span>
           </div>
         `;
         container.appendChild(div);
       });
     }
 
+    let currentDetailTxId = null;
+    function openTxDetail(id) {
+      const tx = state.transactions.find(t => t.id === id);
+      if (!tx) return;
+      currentDetailTxId = id;
+
+      const isExp = tx.type === 'EXPENSE';
+      const isInc = tx.type === 'INCOME';
+      const badge = document.getElementById('txDetailTypeBadge');
+      badge.innerText = tx.type;
+      badge.style.background = isExp ? 'var(--coral-light)' : (isInc ? 'var(--mint-light)' : '#E0F7FA');
+      badge.style.color = isExp ? 'var(--coral-danger)' : (isInc ? 'var(--mint-dark)' : 'var(--cyan-accent)');
+
+      const amtEl = document.getElementById('txDetailAmount');
+      amtEl.innerText = state.isBalanceHidden ? '••••••' : `${isExp ? '-' : '+'}${state.symbol}${tx.amt.toFixed(2)}`;
+      amtEl.style.color = isExp ? 'var(--coral-danger)' : (isInc ? 'var(--mint-dark)' : 'var(--text-dark)');
+
+      document.getElementById('txDetailEmojiBox').innerText = tx.emoji;
+      document.getElementById('txDetailCat').innerText = tx.cat;
+      document.getElementById('txDetailAccount').innerText = tx.account || 'Checking Account';
+      document.getElementById('txDetailNote').innerText = tx.note;
+      document.getElementById('txDetailDate').innerText = tx.date || 'Today at 10:42 AM';
+
+      document.getElementById('sheetTxDetail').classList.add('open');
+    }
+
+    function confirmDeleteFromDetail() {
+      if (currentDetailTxId !== null) {
+        const tx = state.transactions.find(t => t.id === currentDetailTxId);
+        const desc = tx ? `"${tx.note}" (${state.symbol}${tx.amt.toFixed(2)})` : 'this transaction';
+        if (confirm(`Are you sure you want to delete ${desc}?`)) {
+          deleteTx(currentDetailTxId);
+          closeModal('sheetTxDetail');
+          currentDetailTxId = null;
+        }
+      }
+    }
+
     function deleteTx(id) {
       const tx = state.transactions.find(t => t.id === id);
       if (tx) {
+        const targetAcc = tx.account || 'Checking';
         if (tx.type === 'EXPENSE') {
           state.totalBalance += tx.amt;
+          if (targetAcc.includes('Savings')) state.savings += tx.amt;
+          else if (targetAcc.includes('Cash')) state.cash += tx.amt;
+          else state.checking += tx.amt;
           state.totalSpent -= tx.amt;
-        } else {
+        } else if (tx.type === 'INCOME') {
           state.totalBalance -= tx.amt;
+          if (targetAcc.includes('Savings')) state.savings -= tx.amt;
+          else if (targetAcc.includes('Cash')) state.cash -= tx.amt;
+          else state.checking -= tx.amt;
         }
         state.transactions = state.transactions.filter(t => t.id !== id);
         updateUI();
       }
     }
 
+    function toggleHideBalance() {
+      state.isBalanceHidden = !state.isBalanceHidden;
+      const eye = document.getElementById('privacyEyeIcon');
+      if (eye) eye.innerText = state.isBalanceHidden ? '🔒' : '👁️';
+      const topBtn = document.getElementById('btnTopPrivacy');
+      if (topBtn) topBtn.innerText = state.isBalanceHidden ? '🔒 Show Balance' : '👁️ Privacy Mask';
+      updateUI();
+    }
+
     function updateUI() {
-      document.getElementById('heroBalance').innerText = `${state.symbol}${state.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      document.getElementById('accChecking').innerText = `${state.symbol}${state.checking.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      document.getElementById('accSavings').innerText = `${state.symbol}${state.savings.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      
+      const hero = document.getElementById('heroBalance');
+      const chk = document.getElementById('accChecking');
+      const sav = document.getElementById('accSavings');
+      const csh = document.getElementById('accCash');
+      const curTag = document.getElementById('heroCurrencyTag');
+      if (curTag) curTag.innerText = `${state.currency} (${state.symbol})`;
+
+      if (state.isBalanceHidden) {
+        hero.innerText = '••••••';
+        chk.innerText = '••••••';
+        sav.innerText = '••••••';
+        if (csh) csh.innerText = '••••••';
+      } else {
+        hero.innerText = `${state.symbol}${state.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        chk.innerText = `${state.symbol}${state.checking.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        sav.innerText = `${state.symbol}${state.savings.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        if (csh) csh.innerText = `${state.symbol}${state.cash.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      }
+
       const pct = ((state.totalSpent / state.budgetLimit) * 100).toFixed(1);
       document.getElementById('budgetTextDisplay').innerText = `${state.symbol}${state.totalSpent.toFixed(2)} / ${state.symbol}${state.budgetLimit.toFixed(2)}`;
       document.getElementById('budgetMeterFill').style.width = `${Math.min(pct, 100)}%`;
       document.getElementById('budgetRemainingDisplay').innerText = `${state.symbol}${Math.max(0, state.budgetLimit - state.totalSpent).toFixed(2)}`;
       document.getElementById('budgetBurnBadge').innerText = `On Track (${pct}%)`;
 
+      renderCategoryBudgets();
       renderTransactions();
+    }
+
+    function renderCategoryBudgets() {
+      const container = document.getElementById('categoryBudgetsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const spendMap = {};
+      state.transactions.forEach(t => {
+        if (t.type === 'EXPENSE') {
+          spendMap[t.cat] = (spendMap[t.cat] || 0) + t.amt;
+        }
+      });
+
+      Object.entries(state.categoryBudgets).forEach(([cat, limit]) => {
+        const spent = spendMap[cat] || (cat.includes('Food') ? 647.50 : (cat.includes('Shop') ? 462.50 : 370.00));
+        const pct = limit > 0 ? ((spent / limit) * 100).toFixed(0) : 0;
+        const isOver = spent > limit;
+        const isWarning = spent > limit * 0.8 && !isOver;
+        const color = isOver ? 'var(--coral-danger)' : (isWarning ? '#FF9800' : 'var(--mint-dark)');
+        const barColor = isOver ? 'var(--coral-danger)' : (isWarning ? '#FF9800' : 'var(--mint-primary)');
+        const bg = isOver ? '#FFF0F3' : (isWarning ? '#FFF8E6' : 'var(--card-white)');
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.style.cssText = `padding: 14px; margin-bottom: 10px; cursor: pointer; background: ${bg}; transition: transform 0.15s;`;
+        div.onclick = () => openCatBudgetModal(cat, limit);
+        div.innerHTML = `
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
+            <span>${cat}</span>
+            <span style="color: ${color};">${state.symbol}${spent.toFixed(2)} / ${state.symbol}${limit.toFixed(2)} (${pct}%)</span>
+          </div>
+          <div class="budget-meter" style="margin: 8px 0;">
+            <div class="budget-fill" style="width: ${Math.min(pct, 100)}%; background: ${barColor};"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: ${color}; font-weight: 700;">
+            <span>${isOver ? '🚨 Over Budget' : (isWarning ? '⚠️ Approaching 80% Threshold' : '✓ Normal Spending')}</span>
+            <span style="color: var(--mint-dark);">Tap to edit limit ✎</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    let editingCatName = null;
+    function openCatBudgetModal(cat, currentLimit) {
+      editingCatName = cat;
+      document.getElementById('catBudgetModalTitle').innerText = `Adjust ${cat} Budget`;
+      document.getElementById('catBudgetModalLabel').innerText = `Monthly Target Limit (${state.symbol})`;
+      document.getElementById('catBudgetLimitInput').value = currentLimit || state.categoryBudgets[cat] || 500;
+      document.getElementById('sheetCatBudget').classList.add('open');
+    }
+
+    function saveCatBudget() {
+      const val = parseFloat(document.getElementById('catBudgetLimitInput').value);
+      if (val > 0 && editingCatName) {
+        state.categoryBudgets[editingCatName] = val;
+        closeModal('sheetCatBudget');
+        updateUI();
+      }
     }
 
     function switchTab(index) {
@@ -1377,6 +2092,9 @@
       document.getElementById('sheetAdd').classList.add('open');
       document.getElementById('inputAmount').value = '';
       document.getElementById('inputNote').value = '';
+      document.getElementById('amountLabel').innerText = `Amount (${state.symbol})`;
+      updateIncrementChips();
+      setTimeout(() => document.getElementById('inputAmount').focus(), 150);
     }
 
     function setType(type) {
@@ -1385,8 +2103,63 @@
       document.getElementById('btnTypeIncome').classList.toggle('active', type === 'INCOME');
     }
 
+    function selectAccChip(elem, acc) {
+      document.querySelectorAll('#accPills .cat-pill').forEach(p => p.classList.remove('selected'));
+      elem.classList.add('selected');
+      state.selectedAccount = acc;
+    }
+
+    function sanitizeAmountInput(el) {
+      let val = el.value.replace(/,/g, '.');
+      const parts = val.split('.');
+      if (parts.length > 2) {
+        val = parts[0] + '.' + parts.slice(1).join('');
+      }
+      el.value = val;
+    }
+
+    function handleAmountKeydown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('inputNote').focus();
+      }
+    }
+
+    function handleNoteKeydown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitTransaction();
+      }
+    }
+
+    function addAmount(delta) {
+      const input = document.getElementById('inputAmount');
+      const cur = parseFloat(input.value) || 0;
+      input.value = (cur + delta).toFixed(state.currency === 'VND' ? 0 : 2);
+    }
+
+    function updateIncrementChips() {
+      const container = document.getElementById('incChips');
+      if (!container) return;
+      if (state.currency === 'VND') {
+        container.innerHTML = `
+          <div class="inc-chip" onclick="addAmount(20000)">+20k</div>
+          <div class="inc-chip" onclick="addAmount(50000)">+50k</div>
+          <div class="inc-chip" onclick="addAmount(100000)">+100k</div>
+          <div class="inc-chip" onclick="addAmount(500000)">+500k</div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="inc-chip" onclick="addAmount(10)">+10</div>
+          <div class="inc-chip" onclick="addAmount(25)">+25</div>
+          <div class="inc-chip" onclick="addAmount(50)">+50</div>
+          <div class="inc-chip" onclick="addAmount(100)">+100</div>
+        `;
+      }
+    }
+
     function selectCat(elem, cat) {
-      document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('selected'));
+      document.querySelectorAll('#catPills .cat-pill').forEach(p => p.classList.remove('selected'));
       elem.classList.add('selected');
       state.selectedCategory = cat;
     }
@@ -1410,23 +2183,148 @@
         id: Date.now(),
         note: note,
         cat: state.selectedCategory,
+        account: state.selectedAccount,
         emoji: emoji,
         amt: amt,
-        type: state.selectedType
+        type: state.selectedType,
+        date: 'Just now'
       };
 
       state.transactions.unshift(newTx);
+      const targetAcc = state.selectedAccount;
       if (state.selectedType === 'EXPENSE') {
         state.totalBalance -= amt;
-        state.checking -= amt;
+        if (targetAcc.includes('Savings')) state.savings -= amt;
+        else if (targetAcc.includes('Cash')) state.cash -= amt;
+        else state.checking -= amt;
         state.totalSpent += amt;
       } else {
         state.totalBalance += amt;
-        state.checking += amt;
+        if (targetAcc.includes('Savings')) state.savings -= amt;
+        else if (targetAcc.includes('Cash')) state.cash -= amt;
+        else state.checking += amt;
       }
 
       closeModal('sheetAdd');
       updateUI();
+    }
+
+    function handleTxSearch(val) {
+      state.searchQuery = val;
+      renderTransactions();
+    }
+
+    function handleTxSort(val) {
+      state.sortOption = val;
+      renderTransactions();
+    }
+
+    function setFilterType(type) {
+      state.filterType = type;
+      document.getElementById('btnFilterAll').classList.toggle('active', type === 'ALL');
+      document.getElementById('btnFilterExpense').classList.toggle('active', type === 'EXPENSE');
+      document.getElementById('btnFilterIncome').classList.toggle('active', type === 'INCOME');
+      document.getElementById('btnFilterTransfer').classList.toggle('active', type === 'TRANSFER');
+      renderTransactions();
+    }
+
+    function filterByCat(elem, cat) {
+      document.querySelectorAll('#catFilterStrip .cat-pill').forEach(p => p.classList.remove('selected'));
+      elem.classList.add('selected');
+      state.filterCategory = cat;
+      renderTransactions();
+    }
+
+    function resetTxFilters() {
+      state.searchQuery = '';
+      state.filterType = 'ALL';
+      state.filterCategory = 'ALL';
+      state.sortOption = 'NEWEST';
+      document.getElementById('txSearchInput').value = '';
+      document.getElementById('txSortSelect').value = 'NEWEST';
+      setFilterType('ALL');
+      const allCatPill = document.querySelector('#catFilterStrip .cat-pill');
+      if (allCatPill) filterByCat(allCatPill, 'ALL');
+    }
+
+    // Notification Center Handlers
+    function openNotificationCenter() {
+      document.getElementById('sheetNotifications').classList.add('open');
+      const dot = document.getElementById('bellDot');
+      if (dot) dot.style.display = 'none';
+    }
+
+    function clearNotifications() {
+      const dot = document.getElementById('bellDot');
+      if (dot) dot.style.display = 'none';
+      closeModal('sheetNotifications');
+      alert('✓ All notifications acknowledged.');
+    }
+
+    // OCR Smart Bill Scanner
+    function openOcrScanner() {
+      document.getElementById('ocrDetectedAmt').innerText = `${state.symbol}48.50`;
+      document.getElementById('sheetOcrScanner').classList.add('open');
+    }
+
+    function applyScannedBill() {
+      const amt = 48.50;
+      state.transactions.unshift({
+        id: Date.now(),
+        note: 'Whole Foods Market (OCR Scan)',
+        cat: '🍔 Food & Dining',
+        account: 'Checking',
+        emoji: '🧾',
+        amt: amt,
+        type: 'EXPENSE',
+        date: 'Just now'
+      });
+      state.totalBalance -= amt;
+      state.checking -= amt;
+      state.totalSpent += amt;
+      updateUI();
+      closeModal('sheetOcrScanner');
+      alert(`✓ ${state.symbol}${amt.toFixed(2)} receipt processed from OCR scan.`);
+    }
+
+    // More Actions Sheet
+    function openMoreActions() {
+      document.getElementById('sheetMoreActions').classList.add('open');
+    }
+
+    // Account Inspection & Quick Transfer
+    let inspectingAccountName = null;
+    function inspectAccount(name, balance, icon) {
+      inspectingAccountName = name;
+      document.getElementById('accModalIcon').innerText = icon;
+      document.getElementById('accModalName').innerText = name;
+      document.getElementById('accModalBal').innerText = state.isBalanceHidden ? '••••••' : `${state.symbol}${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      document.getElementById('sheetAccountDetail').classList.add('open');
+    }
+
+    function quickTransferFromAccount() {
+      closeModal('sheetAccountDetail');
+      const target = inspectingAccountName === 'Main Savings' ? 'Checking Account' : 'Main Savings';
+      openTransferModal(inspectingAccountName, target);
+    }
+
+    function openAddAccountModal() {
+      document.getElementById('newAccName').value = '';
+      document.getElementById('newAccBalance').value = '';
+      document.getElementById('sheetNewAccount').classList.add('open');
+    }
+
+    function submitNewAccount() {
+      const name = document.getElementById('newAccName').value.trim();
+      const bal = parseFloat(document.getElementById('newAccBalance').value) || 0;
+      if (!name) {
+        alert('Please enter an account name');
+        return;
+      }
+      state.totalBalance += bal;
+      closeModal('sheetNewAccount');
+      updateUI();
+      alert(`✓ Account "${name}" with balance ${state.symbol}${bal.toFixed(2)} created!`);
     }
 
     function openTransferModal(from, to) {
@@ -1444,9 +2342,11 @@
         id: Date.now(),
         note: 'Transfer to Savings',
         cat: 'Internal Transfer',
+        account: 'Checking ➔ Savings',
         emoji: '🔁',
         amt: amt,
-        type: 'TRANSFER'
+        type: 'TRANSFER',
+        date: 'Just now'
       });
       closeModal('sheetTransfer');
       updateUI();
@@ -1474,26 +2374,185 @@
       state.currency = curr;
       state.symbol = sym;
       document.getElementById('currentCurrencyLabel').innerText = `${curr} (${sym})`;
+      document.getElementById('amountLabel').innerText = `Amount (${sym})`;
+      updateIncrementChips();
       closeModal('sheetCurrency');
       updateUI();
     }
 
-    function toggleBiometrics() {
-      state.biometricsEnabled = !state.biometricsEnabled;
-      document.getElementById('bioToggle').classList.toggle('off', !state.biometricsEnabled);
+    let pendingBioAuthCallback = null;
+
+    function requestBiometricAuth(title, subtitle, onConfirm) {
+      document.getElementById('bioPromptTitle').innerText = title;
+      document.getElementById('bioPromptSubtitle').innerText = subtitle;
+      pendingBioAuthCallback = onConfirm;
+      document.getElementById('sheetBioAuthPrompt').classList.add('open');
     }
 
-    function exportCsv() {
+    function confirmBiometricPrompt() {
+      closeModal('sheetBioAuthPrompt');
+      if (pendingBioAuthCallback) {
+        pendingBioAuthCallback();
+        pendingBioAuthCallback = null;
+      }
+    }
+
+    function toggleBiometrics() {
+      if (state.biometricsEnabled) {
+        requestBiometricAuth("Disable Biometric Lock", "Confirm identity to remove app security lock", () => {
+          state.biometricsEnabled = false;
+          document.getElementById('bioToggle').classList.add('off');
+        });
+      } else {
+        requestBiometricAuth("Enable Biometric Lock", "Confirm identity to protect MoneTracka with biometrics", () => {
+          state.biometricsEnabled = true;
+          document.getElementById('bioToggle').classList.remove('off');
+        });
+      }
+    }
+
+    function triggerLockScreen() {
+      const overlay = document.getElementById('lockScreenOverlay');
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+      document.getElementById('bioUnlockBtnText').innerText = "Unlock with Biometrics";
+    }
+
+    function simulateBiometricUnlock() {
+      const btnText = document.getElementById('bioUnlockBtnText');
+      btnText.innerText = "Scanning Biometrics...";
+      setTimeout(() => {
+        btnText.innerText = "✓ Verified";
+        setTimeout(() => {
+          const overlay = document.getElementById('lockScreenOverlay');
+          overlay.style.transition = 'opacity 0.3s ease';
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            overlay.style.display = 'none';
+            btnText.innerText = "Unlock with Biometrics";
+          }, 300);
+        }, 300);
+      }, 500);
+    }
+
+    // CSV Export & Import Handlers
+    function generateCsvString() {
       let csv = "id,note,category,amount,type,currency\n";
       state.transactions.forEach(t => {
-        csv += `${t.id},"${t.note}","${t.cat}",${t.amt},${t.type},${state.currency}\n`;
+        csv += `${t.id},"${t.note}","${t.cat}",${t.amt.toFixed(2)},${t.type},${state.currency}\n`;
       });
+      return csv;
+    }
+
+    function proceedExportModal() {
+      const csv = generateCsvString();
+      document.getElementById('exportCount').innerText = `${state.transactions.length} Transactions Ready`;
+      document.getElementById('csvPreviewBox').value = csv;
+      document.getElementById('sheetExportCsv').classList.add('open');
+    }
+
+    function openExportModal() {
+      if (state.biometricsEnabled) {
+        requestBiometricAuth("Export Financial Records", "Confirm identity before exporting transactions to CSV", () => {
+          proceedExportModal();
+        });
+      } else {
+        proceedExportModal();
+      }
+    }
+
+    function copyCsvClipboard() {
+      const box = document.getElementById('csvPreviewBox');
+      box.select();
+      navigator.clipboard.writeText(box.value);
+      const btn = document.getElementById('btnCopyCsv');
+      btn.innerText = '✓ Copied to Clipboard!';
+      setTimeout(() => { btn.innerText = '📋 Copy to Clipboard'; }, 2000);
+    }
+
+    function downloadCsvFile() {
+      const csv = generateCsvString();
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `MoneTracka_Export_${Date.now()}.csv`;
       a.click();
+      closeModal('sheetExportCsv');
+    }
+
+    function openImportModal() {
+      document.getElementById('sheetImportCsv').classList.add('open');
+      document.getElementById('csvImportInput').value = '';
+      document.getElementById('importStatusMsg').innerText = 'Paste raw CSV text below (schema: id, note, category, amount, type, currency):';
+      document.getElementById('importStatusMsg').style.color = 'var(--text-gray)';
+    }
+
+    function pasteSampleCsv() {
+      const sample = `id,note,category,amount,type,currency\n101,"Whole Foods Groceries","🍔 Food & Dining",82.40,EXPENSE,${state.currency}\n102,"Monthly Salary Retainer","💼 Salary",3200.00,INCOME,${state.currency}\n103,"Electric Bill Utilities","💡 Utilities",65.50,EXPENSE,${state.currency}`;
+      document.getElementById('csvImportInput').value = sample;
+    }
+
+    function validateCsvOnly() {
+      const text = document.getElementById('csvImportInput').value.trim();
+      if (!text) {
+        document.getElementById('importStatusMsg').innerText = '⚠️ Paste CSV rows first before verifying';
+        document.getElementById('importStatusMsg').style.color = 'var(--coral-danger)';
+        return;
+      }
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      const dataRows = lines.length > 1 ? lines.length - 1 : 0;
+      document.getElementById('importStatusMsg').innerText = `✓ Detected ${dataRows} valid candidate transaction rows`;
+      document.getElementById('importStatusMsg').style.color = 'var(--mint-dark)';
+    }
+
+    function processCsvImport() {
+      const text = document.getElementById('csvImportInput').value.trim();
+      if (!text) {
+        document.getElementById('importStatusMsg').innerText = '⚠️ Please paste CSV text first';
+        document.getElementById('importStatusMsg').style.color = 'var(--coral-danger)';
+        return;
+      }
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      if (lines.length <= 1) {
+        document.getElementById('importStatusMsg').innerText = '⚠️ CSV must contain a header and at least 1 record';
+        document.getElementById('importStatusMsg').style.color = 'var(--coral-danger)';
+        return;
+      }
+
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        if (row.length >= 4) {
+          const amt = parseFloat(row[3]) || 0;
+          const type = (row[4] || 'EXPENSE').toUpperCase();
+          if (amt > 0) {
+            state.transactions.unshift({
+              id: Date.now() + i,
+              note: row[1] || 'Imported Entry',
+              cat: row[2] || '🍔 Food & Dining',
+              account: 'Checking',
+              emoji: type === 'INCOME' ? '💰' : '💳',
+              amt: amt,
+              type: type,
+              date: 'Imported'
+            });
+            if (type === 'INCOME') {
+              state.totalBalance += amt;
+              state.checking += amt;
+            } else {
+              state.totalBalance -= amt;
+              state.checking -= amt;
+              state.totalSpent += amt;
+            }
+            imported++;
+          }
+        }
+      }
+
+      closeModal('sheetImportCsv');
+      updateUI();
+      alert(`✓ Successfully imported ${imported} transactions!`);
     }
 
     function inspectCategory(name, amt, pct) {
@@ -1502,7 +2561,8 @@
     }
 
     function closeModal(id) {
-      document.getElementById(id).classList.remove('open');
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('open');
     }
 
     // Top control handlers
@@ -1530,6 +2590,7 @@
     });
 
     // Init
+    updateIncrementChips();
     updateUI();
   </script>
 </body>

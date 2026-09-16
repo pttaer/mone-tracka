@@ -38,6 +38,8 @@ interface UserProfileRepository {
     suspend fun updateMonthlyBudget(limit: Double)
     suspend fun updateCurrency(currency: String)
     suspend fun hasCompletedOnboarding(): Boolean
+    suspend fun updateBiometricEnabled(enabled: Boolean)
+    suspend fun isBiometricEnabled(): Boolean
 }
 
 
