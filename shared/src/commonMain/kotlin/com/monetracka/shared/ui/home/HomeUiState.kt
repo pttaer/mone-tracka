@@ -75,6 +75,7 @@ sealed interface HomeIntent {
     data class UpdateCategoryBudget(val categoryId: Long, val newLimit: Double) : HomeIntent
     data class ImportTransactions(val transactions: List<Transaction>) : HomeIntent
     data class SetBiometricEnabled(val enabled: Boolean) : HomeIntent
+    data class CreateCategory(val name: String, val emoji: String, val type: TransactionType) : HomeIntent
 }
 
 

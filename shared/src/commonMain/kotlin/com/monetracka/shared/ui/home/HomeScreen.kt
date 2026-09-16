@@ -110,6 +110,9 @@ class HomeScreen : Screen {
                 initialType = state.addSheetInitialType,
                 currency = state.currency,
                 onDismiss = { screenModel.onIntent(HomeIntent.DismissAddTransaction) },
+                onCreateCategory = { name, emoji, type ->
+                    screenModel.onIntent(HomeIntent.CreateCategory(name, emoji, type))
+                },
                 onSave = { amount, type, categoryId, accountId, note, isRecurring, interval ->
                     screenModel.onIntent(
                         HomeIntent.CreateTransaction(

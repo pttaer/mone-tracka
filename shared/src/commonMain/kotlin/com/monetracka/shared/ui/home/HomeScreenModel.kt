@@ -3,6 +3,7 @@ package com.monetracka.shared.ui.home
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.monetracka.shared.domain.model.Account
+import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.CategorySpend
 import com.monetracka.shared.domain.model.Transaction
 import com.monetracka.shared.domain.model.TransactionType
@@ -333,6 +334,18 @@ class HomeScreenModel(
             is HomeIntent.SetBiometricEnabled -> {
                 screenModelScope.launch {
                     userProfileRepository?.updateBiometricEnabled(intent.enabled)
+                }
+            }
+            is HomeIntent.CreateCategory -> {
+                screenModelScope.launch {
+                    categoryRepository.insertCategory(
+                        Category(
+                            name = intent.name,
+                            emoji = intent.emoji,
+                            type = intent.type,
+                            isDefault = false
+                        )
+                    )
                 }
             }
         }

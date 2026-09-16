@@ -38,6 +38,7 @@ fun AddTransactionBottomSheet(
     initialType: TransactionType = TransactionType.EXPENSE,
     currency: String = "USD",
     onDismiss: () -> Unit,
+    onCreateCategory: ((name: String, emoji: String, type: TransactionType) -> Unit)? = null,
     onSave: (Double, TransactionType, Long, Long, String, Boolean, com.monetracka.shared.domain.model.RecurringInterval) -> Unit
 ) {
     if (!isOpen) return
@@ -47,6 +48,10 @@ fun AddTransactionBottomSheet(
     var selectedType by remember(initialType) { mutableStateOf(initialType) }
     var selectedAccountId by remember(accounts) { mutableStateOf(accounts.firstOrNull()?.account?.id ?: 1L) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isAddingCustomCategory by remember { mutableStateOf(false) }
+    var customCategoryName by remember { mutableStateOf("") }
+    var customCategoryEmoji by remember { mutableStateOf("") }
+    var pendingCategoryName by remember { mutableStateOf<String?>(null) }
 
     val amountFocusRequester = remember { FocusRequester() }
     val noteFocusRequester = remember { FocusRequester() }
@@ -81,6 +86,16 @@ fun AddTransactionBottomSheet(
 
     var selectedCategoryId by remember(filteredCategories) {
         mutableStateOf(filteredCategories.firstOrNull()?.id ?: 1L)
+    }
+
+    LaunchedEffect(filteredCategories, pendingCategoryName) {
+        if (pendingCategoryName != null) {
+            val created = filteredCategories.firstOrNull { it.name.equals(pendingCategoryName, ignoreCase = true) }
+            if (created != null) {
+                selectedCategoryId = created.id
+                pendingCategoryName = null
+            }
+        }
     }
 
     var isRecurring by remember { mutableStateOf(false) }
@@ -305,6 +320,38 @@ fun AddTransactionBottomSheet(
                         }
                     }
                 }
+
+                if (onCreateCategory != null) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MoneTrackaColors.SurfaceSecondary)
+                                .border(
+                                    width = 1.dp,
+                                    color = MoneTrackaColors.ProgressTrack,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    isAddingCustomCategory = true
+                                }
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(text = "✨", fontSize = 16.sp)
+                                Text(
+                                    text = "+ Custom",
+                                    fontSize = 12.sp,
+                                    color = MoneTrackaColors.MintPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.height(14.dp))
@@ -452,5 +499,77 @@ fun AddTransactionBottomSheet(
                 Text("Confirm Transaction", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
+    }
+
+    if (isAddingCustomCategory) {
+        AlertDialog(
+            onDismissRequest = {
+                isAddingCustomCategory = false
+                customCategoryName = ""
+                customCategoryEmoji = ""
+            },
+            title = {
+                Text(
+                    text = "New Custom Category",
+                    fontWeight = FontWeight.Bold,
+                    color = MoneTrackaColors.TextDark
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Create a custom ${if (selectedType == TransactionType.EXPENSE) "expense" else "income"} category.",
+                        fontSize = 13.sp,
+                        color = MoneTrackaColors.TextGray
+                    )
+                    OutlinedTextField(
+                        value = customCategoryEmoji,
+                        onValueChange = { if (it.length <= 4) customCategoryEmoji = it },
+                        label = { Text("Emoji Icon", color = MoneTrackaColors.TextGray) },
+                        placeholder = { Text("🏷️", color = MoneTrackaColors.TextLight) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = customCategoryName,
+                        onValueChange = { customCategoryName = it },
+                        label = { Text("Category Name", color = MoneTrackaColors.TextGray) },
+                        placeholder = { Text("e.g. Gaming, Pet Care", color = MoneTrackaColors.TextLight) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val name = customCategoryName.trim()
+                        if (name.isNotEmpty()) {
+                            val emoji = customCategoryEmoji.trim().ifEmpty { "🏷️" }
+                            pendingCategoryName = name
+                            onCreateCategory?.invoke(name, emoji, selectedType)
+                            isAddingCustomCategory = false
+                            customCategoryName = ""
+                            customCategoryEmoji = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary)
+                ) {
+                    Text("Add & Select", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        isAddingCustomCategory = false
+                        customCategoryName = ""
+                        customCategoryEmoji = ""
+                    }
+                ) {
+                    Text("Cancel", color = MoneTrackaColors.TextGray)
+                }
+            },
+            containerColor = MoneTrackaColors.CardWhite
+        )
     }
 }

@@ -32,8 +32,12 @@ class FakeTransactionRepository(private val txs: List<Transaction>) : Transactio
 }
 
 class FakeCategoryRepository(private val cats: List<Category>) : CategoryRepository {
-    override fun getAllCategories(): Flow<List<Category>> = flowOf(cats)
-    override suspend fun insertCategory(category: Category): Long = 1L
+    val inserted = mutableListOf<Category>()
+    override fun getAllCategories(): Flow<List<Category>> = flowOf(cats + inserted)
+    override suspend fun insertCategory(category: Category): Long {
+        inserted.add(category)
+        return (cats.size + inserted.size).toLong()
+    }
     override suspend fun insertDefaultCategories() {}
 }
 
@@ -355,6 +359,26 @@ class HomeScreenModelTest {
 
         assertEquals(true, userRepo.isBiometricEnabled())
         assertEquals(true, viewModel.state.value.isBiometricEnabled)
+    }
+
+    @Test
+    fun testCreateCustomCategory() = runTest(testDispatcher) {
+        val catRepo = FakeCategoryRepository(emptyList())
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(emptyList()),
+            categoryRepository = catRepo,
+            accountRepository = FakeAccountRepository(emptyList())
+        )
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.CreateCategory(name = "Gaming", emoji = "🎮", type = TransactionType.EXPENSE))
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(1, catRepo.inserted.size)
+        assertEquals("Gaming", catRepo.inserted.first().name)
+        assertEquals("🎮", catRepo.inserted.first().emoji)
+        assertEquals(TransactionType.EXPENSE, catRepo.inserted.first().type)
+        assertEquals(false, catRepo.inserted.first().isDefault)
     }
 }
 

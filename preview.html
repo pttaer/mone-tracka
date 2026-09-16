@@ -1382,13 +1382,7 @@
 
           <div class="form-group">
             <label>Category</label>
-            <div class="category-pills" id="catPills">
-              <div class="cat-pill selected" onclick="selectCat(this, '🍔 Food & Dining')">🍔 Dining</div>
-              <div class="cat-pill" onclick="selectCat(this, '🛍️ Shopping')">🛍️ Shopping</div>
-              <div class="cat-pill" onclick="selectCat(this, '🚗 Transport')">🚗 Transport</div>
-              <div class="cat-pill" onclick="selectCat(this, '💡 Utilities')">💡 Utilities</div>
-              <div class="cat-pill" onclick="selectCat(this, '💼 Salary')">💼 Salary</div>
-            </div>
+            <div class="category-pills" id="catPills"></div>
           </div>
 
           <div class="form-group">
@@ -1398,6 +1392,29 @@
 
           <button class="btn-submit" onclick="submitTransaction()">Save Transaction</button>
           <button class="ctrl-btn" style="width: 100%; margin-top: 8px;" onclick="closeModal('sheetAdd')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ── MODAL: ADD CUSTOM CATEGORY ── -->
+      <div class="sheet-overlay center-modal" id="sheetCustomCat">
+        <div class="modal-dialog">
+          <div style="font-size: 36px; text-align: center; margin-bottom: 8px;">✨</div>
+          <div style="font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 6px; color: var(--text-dark);">New Custom Category</div>
+          <p style="font-size: 13px; color: var(--text-gray); line-height: 1.45; text-align: center; margin-bottom: 16px;">
+            Create a custom category with your own emoji & name.
+          </p>
+          <div class="form-group" style="text-align: left;">
+            <label>Icon / Emoji</label>
+            <input type="text" class="form-input" id="inputCustomCatEmoji" value="🎮" maxlength="4" style="text-align: center; font-size: 20px;">
+          </div>
+          <div class="form-group" style="text-align: left;">
+            <label>Category Name</label>
+            <input type="text" class="form-input" id="inputCustomCatName" placeholder="e.g. Gaming, Pet Care, Crypto" onkeydown="if(event.key==='Enter') saveCustomCategory()">
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 14px;">
+            <button class="ctrl-btn" style="flex: 1; padding: 12px; font-size: 14px;" onclick="closeModal('sheetCustomCat')">Cancel</button>
+            <button class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px;" onclick="saveCustomCategory()">Add & Select</button>
+          </div>
         </div>
       </div>
 
@@ -1791,8 +1808,15 @@
       budgetLimit: 3000.00,
       totalSpent: 1850.00,
       selectedType: 'EXPENSE',
-      selectedCategory: '🍔 Food & Dining',
+      selectedCategory: '🍔 Dining',
       selectedAccount: 'Checking',
+      categories: [
+        { id: 1, name: 'Dining', label: '🍔 Dining', emoji: '🍔', type: 'EXPENSE' },
+        { id: 2, name: 'Shopping', label: '🛍️ Shopping', emoji: '🛍️', type: 'EXPENSE' },
+        { id: 3, name: 'Transport', label: '🚗 Transport', emoji: '🚗', type: 'EXPENSE' },
+        { id: 4, name: 'Utilities', label: '💡 Utilities', emoji: '💡', type: 'EXPENSE' },
+        { id: 5, name: 'Salary', label: '💼 Salary', emoji: '💰', type: 'INCOME' }
+      ],
       sortOption: 'NEWEST',
       searchQuery: '',
       filterType: 'ALL',
@@ -2008,6 +2032,7 @@
       document.getElementById('budgetBurnBadge').innerText = `On Track (${pct}%)`;
 
       renderCategoryBudgets();
+      renderCategoryPills();
       renderTransactions();
     }
 
@@ -2094,6 +2119,7 @@
       document.getElementById('inputNote').value = '';
       document.getElementById('amountLabel').innerText = `Amount (${state.symbol})`;
       updateIncrementChips();
+      renderCategoryPills();
       setTimeout(() => document.getElementById('inputAmount').focus(), 150);
     }
 
@@ -2101,6 +2127,51 @@
       state.selectedType = type;
       document.getElementById('btnTypeExpense').classList.toggle('active', type === 'EXPENSE');
       document.getElementById('btnTypeIncome').classList.toggle('active', type === 'INCOME');
+      renderCategoryPills();
+    }
+
+    function renderCategoryPills() {
+      const container = document.getElementById('catPills');
+      if (!container) return;
+      const relevant = state.categories.filter(c => c.type === state.selectedType);
+      if (!relevant.some(c => c.label === state.selectedCategory || c.name === state.selectedCategory)) {
+        state.selectedCategory = relevant[0]?.label || (state.selectedType === 'EXPENSE' ? '🍔 Dining' : '💼 Salary');
+      }
+      let html = '';
+      relevant.forEach(cat => {
+        const isSel = (cat.label === state.selectedCategory || cat.name === state.selectedCategory);
+        html += `<div class="cat-pill ${isSel ? 'selected' : ''}" onclick="selectCat(this, '${cat.label}')">${cat.label}</div>`;
+      });
+      html += `<div class="cat-pill" style="border: 1.5px dashed var(--mint-primary); color: var(--mint-primary); font-weight: 700; cursor: pointer;" onclick="openCustomCatModal()">✨ + Custom</div>`;
+      container.innerHTML = html;
+    }
+
+    function openCustomCatModal() {
+      document.getElementById('inputCustomCatEmoji').value = '🎮';
+      document.getElementById('inputCustomCatName').value = '';
+      document.getElementById('sheetCustomCat').classList.add('open');
+      setTimeout(() => document.getElementById('inputCustomCatName').focus(), 150);
+    }
+
+    function saveCustomCategory() {
+      const name = document.getElementById('inputCustomCatName').value.trim();
+      const emoji = document.getElementById('inputCustomCatEmoji').value.trim() || '🏷️';
+      if (!name) {
+        alert('Please enter a category name');
+        return;
+      }
+      const label = `${emoji} ${name}`;
+      const newCat = {
+        id: Date.now(),
+        name: name,
+        label: label,
+        emoji: emoji,
+        type: state.selectedType
+      };
+      state.categories.push(newCat);
+      state.selectedCategory = label;
+      closeModal('sheetCustomCat');
+      renderCategoryPills();
     }
 
     function selectAccChip(elem, acc) {
@@ -2172,12 +2243,8 @@
         return;
       }
 
-      let emoji = '💸';
-      if (state.selectedCategory.includes('Food')) emoji = '🍔';
-      else if (state.selectedCategory.includes('Shop')) emoji = '🛍️';
-      else if (state.selectedCategory.includes('Transport')) emoji = '🚗';
-      else if (state.selectedCategory.includes('Utilities')) emoji = '💡';
-      else if (state.selectedCategory.includes('Salary')) emoji = '💰';
+      const matchedCat = state.categories.find(c => c.label === state.selectedCategory || c.name === state.selectedCategory);
+      let emoji = matchedCat ? matchedCat.emoji : (state.selectedType === 'EXPENSE' ? '💸' : '💰');
 
       const newTx = {
         id: Date.now(),
@@ -2202,12 +2269,13 @@
         state.totalBalance += amt;
         if (targetAcc.includes('Savings')) state.savings -= amt;
         else if (targetAcc.includes('Cash')) state.cash -= amt;
-        else state.checking += amt;
+        else state.checking -= amt;
       }
 
       closeModal('sheetAdd');
       updateUI();
     }
+
 
     function handleTxSearch(val) {
       state.searchQuery = val;
