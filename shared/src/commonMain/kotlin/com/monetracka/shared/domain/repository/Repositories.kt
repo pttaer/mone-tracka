@@ -7,6 +7,7 @@ import com.monetracka.shared.domain.model.UserProfile
 import com.monetracka.shared.domain.model.ExchangeRate
 import com.monetracka.shared.domain.model.CategoryBudget
 import com.monetracka.shared.domain.model.RecurringTransaction
+import com.monetracka.shared.domain.model.SavingsGoal
 import kotlinx.coroutines.flow.Flow
 
 
@@ -15,6 +16,7 @@ interface TransactionRepository {
     fun getAllTransactions(): Flow<List<Transaction>>
     fun searchTransactions(query: String): Flow<List<Transaction>>
     suspend fun insertTransaction(transaction: Transaction): Long
+    suspend fun updateTransaction(transaction: Transaction)
     suspend fun deleteTransaction(id: Long)
 }
 
@@ -22,12 +24,14 @@ interface TransactionRepository {
 interface CategoryRepository {
     fun getAllCategories(): Flow<List<Category>>
     suspend fun insertCategory(category: Category): Long
+    suspend fun deleteCategory(id: Long)
     suspend fun insertDefaultCategories()
 }
 
 interface AccountRepository {
     fun getAllAccounts(): Flow<List<Account>>
     suspend fun insertAccount(account: Account): Long
+    suspend fun updateAccount(account: Account)
     suspend fun deleteAccount(id: Long)
     suspend fun insertDefaultAccounts()
 }
@@ -64,6 +68,14 @@ interface RecurringTransactionRepository {
     suspend fun updateNextDueDate(id: Long, nextDueDateMillis: Long)
     suspend fun deleteRecurring(id: Long)
     suspend fun processDueRecurring(currentMillis: Long): Int
+}
+
+interface SavingsGoalRepository {
+    fun getAllGoals(): Flow<List<SavingsGoal>>
+    suspend fun getGoalById(id: Long): SavingsGoal?
+    suspend fun insertGoal(goal: SavingsGoal): Long
+    suspend fun updateGoalAmount(id: Long, currentAmount: Double)
+    suspend fun deleteGoal(id: Long)
 }
 
 

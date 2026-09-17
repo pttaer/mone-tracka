@@ -28,6 +28,12 @@ class FakeTransactionRepository(private val txs: List<Transaction>) : Transactio
         inserted.add(transaction)
         return 1L
     }
+    override suspend fun updateTransaction(transaction: Transaction) {
+        val idx = inserted.indexOfFirst { it.id == transaction.id }
+        if (idx != -1) {
+            inserted[idx] = transaction
+        }
+    }
     override suspend fun deleteTransaction(id: Long) {}
 }
 
@@ -38,12 +44,16 @@ class FakeCategoryRepository(private val cats: List<Category>) : CategoryReposit
         inserted.add(category)
         return (cats.size + inserted.size).toLong()
     }
+    override suspend fun deleteCategory(id: Long) {
+        inserted.removeAll { it.id == id }
+    }
     override suspend fun insertDefaultCategories() {}
 }
 
 class FakeAccountRepository(private val accounts: List<Account>) : AccountRepository {
     override fun getAllAccounts(): Flow<List<Account>> = flowOf(accounts)
     override suspend fun insertAccount(account: Account): Long = 1L
+    override suspend fun updateAccount(account: Account) {}
     override suspend fun deleteAccount(id: Long) {}
     override suspend fun insertDefaultAccounts() {}
 }
@@ -379,6 +389,52 @@ class HomeScreenModelTest {
         assertEquals("🎮", catRepo.inserted.first().emoji)
         assertEquals(TransactionType.EXPENSE, catRepo.inserted.first().type)
         assertEquals(false, catRepo.inserted.first().isDefault)
+    }
+
+    @Test
+    fun testTotalIncomeAndExpenseFullAggregation() = runTest(testDispatcher) {
+        val fakeTxs = listOf(
+            Transaction(id = 1L, amount = 100.0, type = TransactionType.INCOME, categoryId = 1L, accountId = 1L, dateMillis = 1000L),
+            Transaction(id = 2L, amount = 40.0, type = TransactionType.EXPENSE, categoryId = 2L, accountId = 1L, dateMillis = 2000L),
+            Transaction(id = 3L, amount = 60.0, type = TransactionType.INCOME, categoryId = 1L, accountId = 1L, dateMillis = 3000L)
+        )
+        val viewModel = HomeScreenModel(
+            transactionRepository = FakeTransactionRepository(fakeTxs),
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList())
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(160.0, viewModel.state.value.totalIncome, 0.01)
+        assertEquals(40.0, viewModel.state.value.totalExpense, 0.01)
+        assertEquals(3, viewModel.state.value.allTransactions.size)
+    }
+
+    @Test
+    fun testCreateTransactionWithCustomDate() = runTest(testDispatcher) {
+        val txRepo = FakeTransactionRepository(emptyList())
+        val viewModel = HomeScreenModel(
+            transactionRepository = txRepo,
+            categoryRepository = FakeCategoryRepository(emptyList()),
+            accountRepository = FakeAccountRepository(emptyList())
+        )
+        testScheduler.advanceUntilIdle()
+
+        val customDate = 1700000000000L
+        viewModel.onIntent(
+            HomeIntent.CreateTransaction(
+                amount = 25.0,
+                type = TransactionType.EXPENSE,
+                categoryId = 1L,
+                accountId = 1L,
+                note = "Coffee yesterday",
+                dateMillis = customDate
+            )
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(1, txRepo.inserted.size)
+        assertEquals(customDate, txRepo.inserted.first().dateMillis)
     }
 }
 

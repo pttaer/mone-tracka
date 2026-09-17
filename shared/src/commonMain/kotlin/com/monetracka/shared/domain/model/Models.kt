@@ -102,6 +102,16 @@ data class RecurringTransaction(
     val autoPost: Boolean = true
 )
 
+data class SavingsGoal(
+    val id: Long = 0L,
+    val name: String,
+    val targetAmount: Double,
+    val currentAmount: Double = 0.0,
+    val emoji: String = "🎯",
+    val deadlineMillis: Long? = null,
+    val targetAccountId: Long = 1L
+)
+
 
 
 

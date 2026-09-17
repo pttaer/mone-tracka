@@ -52,21 +52,40 @@ class TransactionRepositoryImpl(
 
     override suspend fun insertTransaction(transaction: Transaction): Long {
         val now = Clock.System.now().toEpochMilliseconds()
-        queries.insertTransaction(
-            amount = transaction.amount,
-            type = transaction.type.name,
-            categoryId = transaction.categoryId,
-            accountId = transaction.accountId,
-            toAccountId = transaction.toAccountId,
-            note = transaction.note,
-            dateMillis = transaction.dateMillis,
-            createdAtMillis = now,
-        )
-        return queries.lastInsertedTransactionId().executeAsOne()
+        return withContext(Dispatchers.IO) {
+            queries.insertTransaction(
+                amount = transaction.amount,
+                type = transaction.type.name,
+                categoryId = transaction.categoryId,
+                accountId = transaction.accountId,
+                toAccountId = transaction.toAccountId,
+                note = transaction.note,
+                dateMillis = transaction.dateMillis,
+                createdAtMillis = now,
+            )
+            queries.lastInsertedTransactionId().executeAsOne()
+        }
+    }
+
+    override suspend fun updateTransaction(transaction: Transaction) {
+        withContext(Dispatchers.IO) {
+            queries.updateTransaction(
+                amount = transaction.amount,
+                type = transaction.type.name,
+                categoryId = transaction.categoryId,
+                accountId = transaction.accountId,
+                toAccountId = transaction.toAccountId,
+                note = transaction.note,
+                dateMillis = transaction.dateMillis,
+                id = transaction.id
+            )
+        }
     }
 
     override suspend fun deleteTransaction(id: Long) {
-        queries.deleteTransaction(id)
+        withContext(Dispatchers.IO) {
+            queries.deleteTransaction(id)
+        }
     }
 }
 
@@ -84,14 +103,22 @@ class CategoryRepositoryImpl(
     }
 
     override suspend fun insertCategory(category: Category): Long {
-        queries.insertCategory(
-            name = category.name,
-            emoji = category.emoji,
-            colorIndex = category.colorIndex.toLong(),
-            type = category.type.name,
-            isDefault = if (category.isDefault) 1L else 0L,
-        )
-        return queries.lastInsertedCategoryId().executeAsOne()
+        return withContext(Dispatchers.IO) {
+            queries.insertCategory(
+                name = category.name,
+                emoji = category.emoji,
+                colorIndex = category.colorIndex.toLong(),
+                type = category.type.name,
+                isDefault = if (category.isDefault) 1L else 0L,
+            )
+            queries.lastInsertedCategoryId().executeAsOne()
+        }
+    }
+
+    override suspend fun deleteCategory(id: Long) {
+        withContext(Dispatchers.IO) {
+            queries.deleteCategory(id)
+        }
     }
 
     override suspend fun insertDefaultCategories() {
@@ -138,17 +165,33 @@ class AccountRepositoryImpl(
     }
 
     override suspend fun insertAccount(account: Account): Long {
-        queries.insertAccount(
-            name = account.name,
-            emoji = account.emoji,
-            initialBalance = account.initialBalance,
-            description = account.description,
-        )
-        return queries.lastInsertedAccountId().executeAsOne()
+        return withContext(Dispatchers.IO) {
+            queries.insertAccount(
+                name = account.name,
+                emoji = account.emoji,
+                initialBalance = account.initialBalance,
+                description = account.description,
+            )
+            queries.lastInsertedAccountId().executeAsOne()
+        }
+    }
+
+    override suspend fun updateAccount(account: Account) {
+        withContext(Dispatchers.IO) {
+            queries.updateAccount(
+                name = account.name,
+                emoji = account.emoji,
+                initialBalance = account.initialBalance,
+                description = account.description,
+                id = account.id
+            )
+        }
     }
 
     override suspend fun deleteAccount(id: Long) {
-        queries.deleteAccount(id)
+        withContext(Dispatchers.IO) {
+            queries.deleteAccount(id)
+        }
     }
 
     override suspend fun insertDefaultAccounts() {

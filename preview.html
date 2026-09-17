@@ -1259,6 +1259,18 @@
             </div>
           </div>
 
+          <!-- Subscriptions & Recurring Bills -->
+          <div class="card" style="margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div>
+                <div style="font-size: 15px; font-weight: 800; color: var(--text-dark);">Subscriptions & Recurring Bills</div>
+                <div style="font-size: 12px; color: var(--text-gray);" id="subscriptionsBurnText">Committed burn: $45.98/mo</div>
+              </div>
+              <span style="font-size: 11px; font-weight: 800; color: var(--mint-dark); background: var(--mint-light); padding: 3px 8px; border-radius: 6px;" id="subscriptionsCountBadge">2 Active</span>
+            </div>
+            <div id="subscriptionsListContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+
           <!-- Category Budget Limits -->
           <div class="section-title" style="margin: 16px 0 10px 0;">Category Budgets (Tap to Adjust Limit)</div>
           <div id="categoryBudgetsContainer"></div>
@@ -1380,6 +1392,17 @@
             </div>
           </div>
 
+          <!-- Date Selector -->
+          <div class="form-group">
+            <label>Transaction Date</label>
+            <div class="category-pills" id="datePills">
+              <div class="cat-pill selected" onclick="selectDateChip(this, 0)">📅 Today</div>
+              <div class="cat-pill" onclick="selectDateChip(this, 1)">Yesterday</div>
+              <div class="cat-pill" onclick="selectDateChip(this, 2)">2d ago</div>
+              <div class="cat-pill" onclick="selectDateChip(this, 7)">1w ago</div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>Category</label>
             <div class="category-pills" id="catPills"></div>
@@ -1449,8 +1472,33 @@
             </div>
           </div>
 
-          <button class="btn-submit" style="background: var(--coral-danger); box-shadow: 0 4px 14px rgba(255, 90, 121, 0.3);" onclick="confirmDeleteFromDetail()">Delete Transaction</button>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-submit" style="flex: 1; background: var(--mint-primary);" onclick="openEditFromDetail()">Edit Details</button>
+            <button class="btn-submit" style="flex: 1; background: var(--coral-danger); box-shadow: 0 4px 14px rgba(255, 90, 121, 0.3);" onclick="confirmDeleteFromDetail()">Delete</button>
+          </div>
           <button class="ctrl-btn" style="width: 100%; margin-top: 8px; padding: 12px;" onclick="closeModal('sheetTxDetail')">Close</button>
+        </div>
+      </div>
+
+      <!-- ── MODAL: EDIT TRANSACTION ── -->
+      <div class="sheet-overlay center-modal" id="sheetEditTx">
+        <div class="modal-dialog">
+          <div style="font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 6px; color: var(--text-dark);">Edit Transaction</div>
+          <p style="font-size: 13px; color: var(--text-gray); line-height: 1.45; text-align: center; margin-bottom: 16px;">
+            Update amount or note.
+          </p>
+          <div class="form-group" style="text-align: left;">
+            <label>Amount</label>
+            <input type="text" class="form-input" id="editTxAmount" placeholder="0.00" oninput="sanitizeAmountInput(this)">
+          </div>
+          <div class="form-group" style="text-align: left;">
+            <label>Note / Payee</label>
+            <input type="text" class="form-input" id="editTxNote" placeholder="e.g. Starbucks">
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 14px;">
+            <button class="ctrl-btn" style="flex: 1; padding: 12px; font-size: 14px;" onclick="closeModal('sheetEditTx')">Cancel</button>
+            <button class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px;" onclick="saveEditedTransaction()">Save Changes</button>
+          </div>
         </div>
       </div>
 
@@ -1810,6 +1858,12 @@
       selectedType: 'EXPENSE',
       selectedCategory: '🍔 Dining',
       selectedAccount: 'Checking',
+      selectedDateOffset: 0,
+      subscriptions: [
+        { id: 101, title: 'Netflix Standard HD', amount: 15.49, interval: 'Monthly', nextDue: 'Oct 1, 2026' },
+        { id: 102, title: 'Spotify Premium Duo', amount: 14.99, interval: 'Monthly', nextDue: 'Oct 8, 2026' },
+        { id: 103, title: 'iCloud+ Storage 200GB', amount: 2.99, interval: 'Monthly', nextDue: 'Sep 29, 2026' }
+      ],
       categories: [
         { id: 1, name: 'Dining', label: '🍔 Dining', emoji: '🍔', type: 'EXPENSE' },
         { id: 2, name: 'Shopping', label: '🛍️ Shopping', emoji: '🛍️', type: 'EXPENSE' },
@@ -2033,7 +2087,91 @@
 
       renderCategoryBudgets();
       renderCategoryPills();
+      renderSubscriptions();
       renderTransactions();
+    }
+
+    function selectDateChip(elem, offset) {
+      document.querySelectorAll('#datePills .cat-pill').forEach(p => p.classList.remove('selected'));
+      elem.classList.add('selected');
+      state.selectedDateOffset = offset;
+    }
+
+    function renderSubscriptions() {
+      const container = document.getElementById('subscriptionsListContainer');
+      const badge = document.getElementById('subscriptionsCountBadge');
+      const burnText = document.getElementById('subscriptionsBurnText');
+      if (!container) return;
+
+      if (badge) badge.innerText = `${state.subscriptions.length} Active`;
+      const totalBurn = state.subscriptions.reduce((sum, s) => sum + s.amount, 0);
+      if (burnText) burnText.innerText = `Committed burn: ${formatMoney(totalBurn)}/mo`;
+
+      if (state.subscriptions.length === 0) {
+        container.innerHTML = `<div style="text-align: center; font-size: 12px; color: var(--text-gray); padding: 14px; background: var(--surface-sec); border-radius: 10px;">No active subscriptions.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.subscriptions.map(sub => `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--surface-sec); padding: 10px 12px; border-radius: 12px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-dark);">${sub.title}</div>
+            <div style="font-size: 11px; color: var(--text-gray); display: flex; gap: 6px; align-items: center; margin-top: 2px;">
+              <span style="background: var(--mint-light); color: var(--mint-dark); font-weight: 700; padding: 2px 6px; border-radius: 4px; font-size: 10px;">${sub.interval}</span>
+              <span>Next: ${sub.nextDue}</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 13px; font-weight: 800; color: var(--text-dark);">${formatMoney(sub.amount)}</div>
+            <button onclick="deleteSubscription(${sub.id})" style="background: none; border: none; cursor: pointer; font-size: 14px; color: var(--coral-danger);">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteSubscription(id) {
+      state.subscriptions = state.subscriptions.filter(s => s.id !== id);
+      renderSubscriptions();
+    }
+
+    function openEditFromDetail() {
+      if (currentDetailTxId === null) return;
+      const tx = state.transactions.find(t => t.id === currentDetailTxId);
+      if (!tx) return;
+      document.getElementById('editTxAmount').value = tx.amt;
+      document.getElementById('editTxNote').value = tx.note;
+      closeModal('sheetTxDetail');
+      document.getElementById('sheetEditTx').classList.add('open');
+    }
+
+    function saveEditedTransaction() {
+      const amt = parseFloat(document.getElementById('editTxAmount').value);
+      const note = document.getElementById('editTxNote').value.trim();
+      if (isNaN(amt) || amt <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      const tx = state.transactions.find(t => t.id === currentDetailTxId);
+      if (tx) {
+        const diff = amt - tx.amt;
+        const targetAcc = tx.account || 'Checking';
+        if (tx.type === 'EXPENSE') {
+          state.totalBalance -= diff;
+          if (targetAcc.includes('Savings')) state.savings -= diff;
+          else if (targetAcc.includes('Cash')) state.cash -= diff;
+          else state.checking -= diff;
+          state.totalSpent += diff;
+        } else if (tx.type === 'INCOME') {
+          state.totalBalance += diff;
+          if (targetAcc.includes('Savings')) state.savings += diff;
+          else if (targetAcc.includes('Cash')) state.cash += diff;
+          else state.checking += diff;
+        }
+        tx.amt = amt;
+        if (note) tx.note = note;
+      }
+      closeModal('sheetEditTx');
+      updateUI();
     }
 
     function renderCategoryBudgets() {
@@ -2244,7 +2382,8 @@
       }
 
       const matchedCat = state.categories.find(c => c.label === state.selectedCategory || c.name === state.selectedCategory);
-      let emoji = matchedCat ? matchedCat.emoji : (state.selectedType === 'EXPENSE' ? '💸' : '💰');
+      const dateLabel = state.selectedDateOffset === 0 ? 'Today at ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                        (state.selectedDateOffset === 1 ? 'Yesterday' : `${state.selectedDateOffset} days ago`);
 
       const newTx = {
         id: Date.now(),
@@ -2254,7 +2393,7 @@
         emoji: emoji,
         amt: amt,
         type: state.selectedType,
-        date: 'Just now'
+        date: dateLabel
       };
 
       state.transactions.unshift(newTx);

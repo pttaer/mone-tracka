@@ -38,13 +38,20 @@ class HomeScreenModel(
             val now = Clock.System.now().toEpochMilliseconds()
             recurringTransactionRepository?.processDueRecurring(now)
 
-            combine(
+            val coreDataFlow = combine(
                 transactionRepository.getAllTransactions(),
                 categoryRepository.getAllCategories(),
-                accountRepository.getAllAccounts(),
+                accountRepository.getAllAccounts()
+            ) { transactions, categories, accounts ->
+                Triple(transactions, categories, accounts)
+            }
+
+            combine(
+                coreDataFlow,
                 userProfileRepository?.getUserProfile() ?: flowOf(null),
-                categoryBudgetRepository?.getAllCategoryBudgets() ?: flowOf(emptyList())
-            ) { transactions, categories, accounts, userProfile, categoryBudgets ->
+                categoryBudgetRepository?.getAllCategoryBudgets() ?: flowOf(emptyList()),
+                recurringTransactionRepository?.getAllRecurring() ?: flowOf(emptyList())
+            ) { (transactions, categories, accounts), userProfile, categoryBudgets, recurringList ->
                 val categoryMap = categories.associateBy { it.id }
                 val budgetMap = categoryBudgets.associateBy { it.categoryId }
 
@@ -128,11 +135,15 @@ class HomeScreenModel(
 
                 HomeUiState(
                     totalBalance = totalNetBalance,
+                    totalIncome = totalIncome,
+                    totalExpense = totalExpense,
                     monthlyTrendPercent = trend,
                     monthlyTrendAmount = totalIncome - totalExpense,
                     sparklinePoints = sparkline,
                     categorySpends = expensesByCategory,
                     recentTransactions = sortedByDateDesc.take(20),
+                    allTransactions = sortedByDateDesc,
+                    recurringTransactions = recurringList,
                     categories = categoryMap,
                     accounts = accountUiList,
                     coachInsight = insight,
@@ -171,22 +182,23 @@ class HomeScreenModel(
             is HomeIntent.CreateTransaction -> {
                 screenModelScope.launch {
                     val now = Clock.System.now().toEpochMilliseconds()
+                    val txDate = intent.dateMillis ?: now
                     val newTx = Transaction(
                         amount = intent.amount,
                         type = intent.type,
                         categoryId = intent.categoryId,
                         accountId = intent.accountId,
-                        dateMillis = now,
+                        dateMillis = txDate,
                         createdAtMillis = now,
                         note = intent.note
                     )
                     transactionRepository.insertTransaction(newTx)
                     if (intent.isRecurring && recurringTransactionRepository != null) {
                         val nextDue = when (intent.recurringInterval) {
-                            com.monetracka.shared.domain.model.RecurringInterval.DAILY -> now + 86_400_000L
-                            com.monetracka.shared.domain.model.RecurringInterval.WEEKLY -> now + 7 * 86_400_000L
-                            com.monetracka.shared.domain.model.RecurringInterval.MONTHLY -> now + 30 * 86_400_000L
-                            com.monetracka.shared.domain.model.RecurringInterval.YEARLY -> now + 365 * 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.DAILY -> txDate + 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.WEEKLY -> txDate + 7 * 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.MONTHLY -> txDate + 30 * 86_400_000L
+                            com.monetracka.shared.domain.model.RecurringInterval.YEARLY -> txDate + 365 * 86_400_000L
                         }
                         recurringTransactionRepository.insertRecurring(
                             com.monetracka.shared.domain.model.RecurringTransaction(
@@ -205,9 +217,19 @@ class HomeScreenModel(
                     mutableState.value = mutableState.value.copy(isAddSheetOpen = false)
                 }
             }
+            is HomeIntent.UpdateTransaction -> {
+                screenModelScope.launch {
+                    transactionRepository.updateTransaction(intent.transaction)
+                }
+            }
             is HomeIntent.DeleteTransaction -> {
                 screenModelScope.launch {
                     transactionRepository.deleteTransaction(intent.id)
+                }
+            }
+            is HomeIntent.DeleteRecurring -> {
+                screenModelScope.launch {
+                    recurringTransactionRepository?.deleteRecurring(intent.id)
                 }
             }
             is HomeIntent.InitiateTransfer -> {

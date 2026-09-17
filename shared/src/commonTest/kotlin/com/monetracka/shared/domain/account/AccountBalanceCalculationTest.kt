@@ -24,6 +24,7 @@ import kotlin.test.assertEquals
 class FakeAccountRepository(private val accounts: List<Account>) : AccountRepository {
     override fun getAllAccounts(): Flow<List<Account>> = flowOf(accounts)
     override suspend fun insertAccount(account: Account): Long = 1L
+    override suspend fun updateAccount(account: Account) {}
     override suspend fun deleteAccount(id: Long) {}
     override suspend fun insertDefaultAccounts() {}
 }
@@ -57,11 +58,13 @@ class AccountBalanceCalculationTest {
             override fun getAllTransactions(): Flow<List<Transaction>> = flowOf(txs)
             override fun searchTransactions(query: String): Flow<List<Transaction>> = flowOf(txs.filter { it.note.contains(query, ignoreCase = true) })
             override suspend fun insertTransaction(transaction: Transaction): Long = 1L
+            override suspend fun updateTransaction(transaction: Transaction) {}
             override suspend fun deleteTransaction(id: Long) {}
         }
         val fakeCatRepo = object : CategoryRepository {
             override fun getAllCategories(): Flow<List<Category>> = flowOf(emptyList())
             override suspend fun insertCategory(category: Category): Long = 1L
+            override suspend fun deleteCategory(id: Long) {}
             override suspend fun insertDefaultCategories() {}
         }
 

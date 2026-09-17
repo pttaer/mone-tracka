@@ -17,11 +17,15 @@ data class AccountUiModel(
 @Immutable
 data class HomeUiState(
     val totalBalance: Double = 0.0,
+    val totalIncome: Double = 0.0,
+    val totalExpense: Double = 0.0,
     val monthlyTrendPercent: Double = 0.0,
     val monthlyTrendAmount: Double = 0.0,
     val sparklinePoints: List<Float> = emptyList(),
     val categorySpends: List<CategorySpend> = emptyList(),
     val recentTransactions: List<Transaction> = emptyList(),
+    val allTransactions: List<Transaction> = emptyList(),
+    val recurringTransactions: List<com.monetracka.shared.domain.model.RecurringTransaction> = emptyList(),
     val categories: Map<Long, Category> = emptyMap(),
     val accounts: List<AccountUiModel> = emptyList(),
     val coachInsight: com.monetracka.shared.domain.coach.CoachInsight? = null,
@@ -56,9 +60,12 @@ sealed interface HomeIntent {
         val note: String,
         val accountId: Long = 1L,
         val isRecurring: Boolean = false,
-        val recurringInterval: com.monetracka.shared.domain.model.RecurringInterval = com.monetracka.shared.domain.model.RecurringInterval.MONTHLY
+        val recurringInterval: com.monetracka.shared.domain.model.RecurringInterval = com.monetracka.shared.domain.model.RecurringInterval.MONTHLY,
+        val dateMillis: Long? = null
     ) : HomeIntent
+    data class UpdateTransaction(val transaction: Transaction) : HomeIntent
     data class DeleteTransaction(val id: Long) : HomeIntent
+    data class DeleteRecurring(val id: Long) : HomeIntent
     data class InitiateTransfer(val fromAccount: Account, val toAccount: Account) : HomeIntent
     data object DismissTransfer : HomeIntent
     data class ExecuteTransfer(val fromAccountId: Long, val toAccountId: Long, val amount: Double, val note: String = "") : HomeIntent

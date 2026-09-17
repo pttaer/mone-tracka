@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Notifications
@@ -71,6 +72,7 @@ class HomeScreen : Screen {
                     onNavigateToAnalytics = { selectedTab = 1 },
                     onNavigateToAllTransactions = { navigator.push(TransactionListScreen()) },
                     onDeleteTransaction = { screenModel.onIntent(HomeIntent.DeleteTransaction(it)) },
+                    onUpdateTransaction = { screenModel.onIntent(HomeIntent.UpdateTransaction(it)) },
                     onInitiateTransfer = { from, to -> screenModel.onIntent(HomeIntent.InitiateTransfer(from, to)) },
                     onAddAccount = { screenModel.onIntent(HomeIntent.OpenAddAccount) }
                 )
@@ -83,7 +85,8 @@ class HomeScreen : Screen {
                     state = state,
                     listState = budgetsListState,
                     onOpenAdjustBudget = { screenModel.onIntent(HomeIntent.OpenAdjustBudget) },
-                    onOpenAdjustCategoryBudget = { screenModel.onIntent(HomeIntent.OpenAdjustCategoryBudget(it)) }
+                    onOpenAdjustCategoryBudget = { screenModel.onIntent(HomeIntent.OpenAdjustCategoryBudget(it)) },
+                    onDeleteRecurring = { screenModel.onIntent(HomeIntent.DeleteRecurring(it)) }
                 )
                 3 -> SettingsView(
                     state = state,
@@ -113,7 +116,7 @@ class HomeScreen : Screen {
                 onCreateCategory = { name, emoji, type ->
                     screenModel.onIntent(HomeIntent.CreateCategory(name, emoji, type))
                 },
-                onSave = { amount, type, categoryId, accountId, note, isRecurring, interval ->
+                onSave = { amount, type, categoryId, accountId, note, isRecurring, interval, dateMillis ->
                     screenModel.onIntent(
                         HomeIntent.CreateTransaction(
                             amount = amount,
@@ -122,7 +125,8 @@ class HomeScreen : Screen {
                             accountId = accountId,
                             note = note,
                             isRecurring = isRecurring,
-                            recurringInterval = interval
+                            recurringInterval = interval,
+                            dateMillis = dateMillis
                         )
                     )
                 }
@@ -249,6 +253,7 @@ class HomeScreen : Screen {
         onNavigateToAnalytics: () -> Unit,
         onNavigateToAllTransactions: () -> Unit,
         onDeleteTransaction: (Long) -> Unit,
+        onUpdateTransaction: (Transaction) -> Unit,
         onInitiateTransfer: (com.monetracka.shared.domain.model.Account, com.monetracka.shared.domain.model.Account) -> Unit,
         onAddAccount: () -> Unit
     ) {
@@ -263,10 +268,15 @@ class HomeScreen : Screen {
             tx = selectedOverviewTx,
             category = selectedOverviewTx?.let { state.categories[it.categoryId] },
             accounts = accountMap,
+            categories = state.categories.values.toList(),
             currency = state.currency,
             onDismiss = { selectedOverviewTx = null },
             onDelete = {
                 onDeleteTransaction(it)
+                selectedOverviewTx = null
+            },
+            onUpdate = {
+                onUpdateTransaction(it)
                 selectedOverviewTx = null
             }
         )
@@ -613,10 +623,8 @@ class HomeScreen : Screen {
         listState: LazyListState,
         onOpenAdd: (TransactionType) -> Unit
     ) {
-        val totalExpense = remember(state.categorySpends) { state.categorySpends.sumOf { it.amount } }
-        val totalIncome = remember(state.recentTransactions) {
-            state.recentTransactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
-        }
+        val totalExpense = state.totalExpense
+        val totalIncome = state.totalIncome
 
         LazyColumn(
             state = listState,
@@ -825,7 +833,8 @@ class HomeScreen : Screen {
         state: HomeUiState,
         listState: LazyListState,
         onOpenAdjustBudget: () -> Unit,
-        onOpenAdjustCategoryBudget: (CategorySpend) -> Unit
+        onOpenAdjustCategoryBudget: (CategorySpend) -> Unit,
+        onDeleteRecurring: (Long) -> Unit
     ) {
         val totalSpent = remember(state.categorySpends) { state.categorySpends.sumOf { it.amount } }
         val monthlyBudget = state.monthlyBudgetLimit
@@ -944,6 +953,119 @@ class HomeScreen : Screen {
                     }
                 }
             }
+
+            item(key = "subscriptions_section") {
+                val monthlyBurn = remember(state.recurringTransactions) {
+                    state.recurringTransactions.sumOf { rec ->
+                        when (rec.intervalType) {
+                            com.monetracka.shared.domain.model.RecurringInterval.DAILY -> rec.amount * 30.0
+                            com.monetracka.shared.domain.model.RecurringInterval.WEEKLY -> rec.amount * 4.33
+                            com.monetracka.shared.domain.model.RecurringInterval.MONTHLY -> rec.amount
+                            com.monetracka.shared.domain.model.RecurringInterval.YEARLY -> rec.amount / 12.0
+                        }
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(3.dp, RoundedCornerShape(20.dp), spotColor = MoneTrackaColors.CardShadowColor)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(MoneTrackaColors.CardWhite)
+                        .border(1.dp, MoneTrackaColors.ProgressTrack, RoundedCornerShape(20.dp))
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Subscriptions & Recurring Bills (${state.recurringTransactions.size})",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MoneTrackaColors.TextDark
+                        )
+                        Text(
+                            text = "Committed monthly burn: ${CurrencyFormatter.format(monthlyBurn, state.currency)}/mo",
+                            fontSize = 12.sp,
+                            color = MoneTrackaColors.TextGray
+                        )
+                    }
+
+                    if (state.recurringTransactions.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MoneTrackaColors.SurfaceSecondary)
+                                .padding(14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No active recurring bills. Toggle recurring in Add Transaction to track subscriptions here.",
+                                color = MoneTrackaColors.TextGray,
+                                fontSize = 12.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.recurringTransactions.forEach { rec ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MoneTrackaColors.SurfaceSecondary)
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = rec.title,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = MoneTrackaColors.TextDark
+                                        )
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(MoneTrackaColors.MintLight)
+                                                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = rec.intervalType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                                    fontSize = 10.sp,
+                                                    color = MoneTrackaColors.MintDark,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                            Text(
+                                                text = "${CurrencyFormatter.format(rec.amount, state.currency)} / cycle",
+                                                fontSize = 11.sp,
+                                                color = MoneTrackaColors.TextGray
+                                            )
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { onDeleteRecurring(rec.id) },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Cancel subscription",
+                                            tint = MoneTrackaColors.CoralDanger,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             item(key = "limits_title") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1084,8 +1206,8 @@ class HomeScreen : Screen {
         var importValidationMsg by remember { mutableStateOf<String?>(null) }
 
         if (showExportDialog) {
-            val csvContent = remember(state.recentTransactions) {
-                com.monetracka.shared.domain.export.SimpleCsvExporter.exportTransactions(state.recentTransactions)
+            val csvContent = remember(state.allTransactions) {
+                com.monetracka.shared.domain.export.SimpleCsvExporter.exportTransactions(state.allTransactions)
             }
             var isCopied by remember { mutableStateOf(false) }
 
@@ -1097,7 +1219,7 @@ class HomeScreen : Screen {
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "${state.recentTransactions.size} transactions ready for export.",
+                            text = "${state.allTransactions.size} transactions ready for export.",
                             color = MoneTrackaColors.MintDark,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp

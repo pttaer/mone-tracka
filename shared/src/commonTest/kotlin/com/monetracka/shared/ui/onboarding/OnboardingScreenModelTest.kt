@@ -47,6 +47,7 @@ class OnboardingFakeAccountRepo : AccountRepository {
         insertedAccounts.add(account)
         return insertedAccounts.size.toLong()
     }
+    override suspend fun updateAccount(account: Account) {}
     override suspend fun deleteAccount(id: Long) {}
     override suspend fun insertDefaultAccounts() {}
 }
@@ -55,6 +56,7 @@ class OnboardingFakeCategoryRepo : CategoryRepository {
     var defaultCategoriesInserted = false
     override fun getAllCategories(): Flow<List<Category>> = flowOf(emptyList())
     override suspend fun insertCategory(category: Category): Long = 1L
+    override suspend fun deleteCategory(id: Long) {}
     override suspend fun insertDefaultCategories() {
         defaultCategoriesInserted = true
     }

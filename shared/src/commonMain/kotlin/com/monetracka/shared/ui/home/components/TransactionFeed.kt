@@ -4,11 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -224,13 +227,107 @@ fun TransactionDetailBottomSheet(
     tx: Transaction?,
     category: Category?,
     accounts: Map<Long, Account> = emptyMap(),
+    categories: List<Category> = emptyList(),
     currency: String = "USD",
     onDismiss: () -> Unit,
-    onDelete: ((Long) -> Unit)? = null
+    onDelete: ((Long) -> Unit)? = null,
+    onUpdate: ((Transaction) -> Unit)? = null
 ) {
     if (!isOpen || tx == null) return
 
     var showConfirmDelete by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editAmountStr by remember(tx) { mutableStateOf(tx.amount.toString()) }
+    var editNoteStr by remember(tx) { mutableStateOf(tx.note) }
+    var editCategoryId by remember(tx) { mutableStateOf(tx.categoryId) }
+    var editError by remember { mutableStateOf<String?>(null) }
+
+    if (showEditDialog && onUpdate != null) {
+        val validCategories = remember(categories, tx.type) {
+            if (categories.isEmpty()) emptyList()
+            else categories.filter { it.type == tx.type }
+        }
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = {
+                Text("Edit Transaction", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = editAmountStr,
+                        onValueChange = { input ->
+                            val sanitized = input.replace(',', '.').filter { it.isDigit() || it == '.' }
+                            if (sanitized.count { it == '.' } <= 1) {
+                                editAmountStr = sanitized
+                                editError = null
+                            }
+                        },
+                        label = { Text("Amount ($currency)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editNoteStr,
+                        onValueChange = { editNoteStr = it },
+                        label = { Text("Note / Description") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (validCategories.isNotEmpty()) {
+                        Text("Category", fontSize = 12.sp, color = MoneTrackaColors.TextGray, fontWeight = FontWeight.SemiBold)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            items(validCategories, key = { it.id }) { cat ->
+                                val isSel = editCategoryId == cat.id
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSel) MoneTrackaColors.MintLight else MoneTrackaColors.SurfaceSecondary)
+                                        .border(1.dp, if (isSel) MoneTrackaColors.MintPrimary else Color.Transparent, RoundedCornerShape(8.dp))
+                                        .clickable { editCategoryId = cat.id }
+                                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                                ) {
+                                    Text("${cat.emoji} ${cat.name}", fontSize = 11.sp, color = if (isSel) MoneTrackaColors.MintDark else MoneTrackaColors.TextDark, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium)
+                                }
+                            }
+                        }
+                    }
+                    if (editError != null) {
+                        Text(editError!!, color = MoneTrackaColors.CoralDanger, fontSize = 11.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val parsedAmt = editAmountStr.toDoubleOrNull()
+                        if (parsedAmt == null || parsedAmt <= 0.0) {
+                            editError = "Please enter a valid positive amount"
+                            return@Button
+                        }
+                        val updated = tx.copy(
+                            amount = parsedAmt,
+                            note = editNoteStr.trim(),
+                            categoryId = editCategoryId
+                        )
+                        onUpdate(updated)
+                        showEditDialog = false
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Save Changes", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("Cancel", color = MoneTrackaColors.TextDark, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            containerColor = MoneTrackaColors.CardWhite
+        )
+    }
 
     if (showConfirmDelete && onDelete != null) {
         AlertDialog(
@@ -367,27 +464,54 @@ fun TransactionDetailBottomSheet(
                 }
             }
 
-            if (onDelete != null) {
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = { showConfirmDelete = true },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.CoralDanger.copy(alpha = 0.12f)),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MoneTrackaColors.CoralDanger,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Delete Transaction",
-                        color = MoneTrackaColors.CoralDanger,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (onUpdate != null) {
+                    Button(
+                        onClick = { showEditDialog = true },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintLight),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            tint = MoneTrackaColors.MintDark,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Edit",
+                            color = MoneTrackaColors.MintDark,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                if (onDelete != null) {
+                    Button(
+                        onClick = { showConfirmDelete = true },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.CoralDanger.copy(alpha = 0.12f)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MoneTrackaColors.CoralDanger,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Delete",
+                            color = MoneTrackaColors.CoralDanger,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
 

@@ -102,10 +102,15 @@ class TransactionListScreen : Screen {
             tx = selectedTxForDetail,
             category = selectedTxForDetail?.let { state.categories[it.categoryId] },
             accounts = state.accounts,
+            categories = state.categories.values.toList(),
             currency = state.currency,
             onDismiss = { selectedTxForDetail = null },
             onDelete = {
                 screenModel.deleteTransaction(it)
+                selectedTxForDetail = null
+            },
+            onUpdate = {
+                screenModel.updateTransaction(it)
                 selectedTxForDetail = null
             }
         )

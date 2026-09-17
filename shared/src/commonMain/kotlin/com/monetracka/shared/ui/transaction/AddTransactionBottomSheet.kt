@@ -28,6 +28,7 @@ import com.monetracka.shared.domain.model.Category
 import com.monetracka.shared.domain.model.TransactionType
 import com.monetracka.shared.ui.home.AccountUiModel
 import com.monetracka.shared.ui.theme.MoneTrackaColors
+import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +40,7 @@ fun AddTransactionBottomSheet(
     currency: String = "USD",
     onDismiss: () -> Unit,
     onCreateCategory: ((name: String, emoji: String, type: TransactionType) -> Unit)? = null,
-    onSave: (Double, TransactionType, Long, Long, String, Boolean, com.monetracka.shared.domain.model.RecurringInterval) -> Unit
+    onSave: (Double, TransactionType, Long, Long, String, Boolean, com.monetracka.shared.domain.model.RecurringInterval, Long?) -> Unit
 ) {
     if (!isOpen) return
 
@@ -52,6 +53,12 @@ fun AddTransactionBottomSheet(
     var customCategoryName by remember { mutableStateOf("") }
     var customCategoryEmoji by remember { mutableStateOf("") }
     var pendingCategoryName by remember { mutableStateOf<String?>(null) }
+    var selectedDateOffsetDays by remember { mutableStateOf(0) }
+
+    val selectedDateMillis = remember(selectedDateOffsetDays) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        now - (selectedDateOffsetDays * 86_400_000L)
+    }
 
     val amountFocusRequester = remember { FocusRequester() }
     val noteFocusRequester = remember { FocusRequester() }
@@ -237,6 +244,37 @@ fun AddTransactionBottomSheet(
 
             Spacer(Modifier.height(10.dp))
 
+            // Transaction Date Selector
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf(0 to "Today", 1 to "Yesterday", 2 to "2d ago", 7 to "1w ago").forEach { (offset, label) ->
+                    val isSel = selectedDateOffsetDays == offset
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSel) MoneTrackaColors.MintLight else MoneTrackaColors.SurfaceSecondary)
+                            .border(1.dp, if (isSel) MoneTrackaColors.MintPrimary else Color.Transparent, RoundedCornerShape(8.dp))
+                            .clickable {
+                                selectedDateOffsetDays = offset
+                            }
+                            .padding(vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 11.sp,
+                            color = if (isSel) MoneTrackaColors.MintDark else MoneTrackaColors.TextDark,
+                            fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
             OutlinedTextField(
                 value = noteStr,
                 onValueChange = { noteStr = it },
@@ -260,7 +298,7 @@ fun AddTransactionBottomSheet(
                         }
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         val sanitizedNote = noteStr.trim().take(255)
-                        onSave(amt, selectedType, selectedCategoryId, selectedAccountId, sanitizedNote, isRecurring, selectedInterval)
+                        onSave(amt, selectedType, selectedCategoryId, selectedAccountId, sanitizedNote, isRecurring, selectedInterval, selectedDateMillis)
                     }
                 ),
                 singleLine = true,
@@ -490,7 +528,7 @@ fun AddTransactionBottomSheet(
                     }
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     val sanitizedNote = noteStr.trim().take(255)
-                    onSave(amt, selectedType, selectedCategoryId, selectedAccountId, sanitizedNote, isRecurring, selectedInterval)
+                    onSave(amt, selectedType, selectedCategoryId, selectedAccountId, sanitizedNote, isRecurring, selectedInterval, selectedDateMillis)
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MoneTrackaColors.MintPrimary),

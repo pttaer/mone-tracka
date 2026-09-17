@@ -63,4 +63,10 @@ class TransactionListScreenModel(
             transactionRepository.deleteTransaction(id)
         }
     }
+
+    fun updateTransaction(transaction: Transaction) {
+        screenModelScope.launch {
+            transactionRepository.updateTransaction(transaction)
+        }
+    }
 }

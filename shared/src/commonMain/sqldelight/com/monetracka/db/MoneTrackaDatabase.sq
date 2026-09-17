@@ -68,6 +68,17 @@ CREATE TABLE IF NOT EXISTS RecurringTransactionEntity (
     FOREIGN KEY (accountId) REFERENCES AccountEntity(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS SavingsGoalEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    targetAmount REAL NOT NULL,
+    currentAmount REAL NOT NULL DEFAULT 0.0,
+    emoji TEXT NOT NULL DEFAULT '🎯',
+    deadlineMillis INTEGER,
+    targetAccountId INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (targetAccountId) REFERENCES AccountEntity(id) ON DELETE CASCADE
+);
+
 
 
 CREATE INDEX idx_transaction_date ON TransactionEntity(dateMillis);
@@ -83,6 +94,9 @@ insertCategory:
 INSERT INTO CategoryEntity(name, emoji, colorIndex, type, isDefault)
 VALUES (?, ?, ?, ?, ?);
 
+deleteCategory:
+DELETE FROM CategoryEntity WHERE id = ?;
+
 lastInsertedCategoryId:
 SELECT last_insert_rowid();
 
@@ -96,6 +110,11 @@ SELECT * FROM AccountEntity ORDER BY id ASC;
 insertAccount:
 INSERT INTO AccountEntity(name, emoji, initialBalance, description)
 VALUES (?, ?, ?, ?);
+
+updateAccount:
+UPDATE AccountEntity
+SET name = ?, emoji = ?, initialBalance = ?, description = ?
+WHERE id = ?;
 
 deleteAccount:
 DELETE FROM AccountEntity WHERE id = ?;
@@ -119,6 +138,11 @@ ORDER BY dateMillis DESC;
 insertTransaction:
 INSERT INTO TransactionEntity(amount, type, categoryId, accountId, toAccountId, note, dateMillis, createdAtMillis)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+updateTransaction:
+UPDATE TransactionEntity
+SET amount = ?, type = ?, categoryId = ?, accountId = ?, toAccountId = ?, note = ?, dateMillis = ?
+WHERE id = ?;
 
 deleteTransaction:
 DELETE FROM TransactionEntity WHERE id = ?;
@@ -191,6 +215,23 @@ UPDATE RecurringTransactionEntity SET nextDueDateMillis = ? WHERE id = ?;
 
 deleteRecurringTransaction:
 DELETE FROM RecurringTransactionEntity WHERE id = ?;
+
+-- Savings Goal Queries
+getAllSavingsGoals:
+SELECT * FROM SavingsGoalEntity ORDER BY id ASC;
+
+getSavingsGoalById:
+SELECT * FROM SavingsGoalEntity WHERE id = ?;
+
+insertSavingsGoal:
+INSERT INTO SavingsGoalEntity(name, targetAmount, currentAmount, emoji, deadlineMillis, targetAccountId)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateSavingsGoalAmount:
+UPDATE SavingsGoalEntity SET currentAmount = ? WHERE id = ?;
+
+deleteSavingsGoal:
+DELETE FROM SavingsGoalEntity WHERE id = ?;
 
 
 
